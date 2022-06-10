@@ -127,8 +127,6 @@ spec:
       containers:
       - args:
           - --disable-hot-restart
-          - --bootstrap-version
-          - "3"
         {{- if $spec.envoyLogLevel }}
           - --log-level {{ $spec.envoyLogLevel }}
         {{- end}}
@@ -326,9 +324,9 @@ spec:
 {{- if not $global.istioSDS.customSidecars }}
       - name: istio-proxy
         image: docker.io/istio/proxyv2:1.9.5
-        {{- if $global.glooMtls.sdsResources }}
+        {{- if $global.glooMtls.envoySidecarResources }}
         resources:
-{{ toYaml $global.glooMtls.sdsResources | indent 10}}
+{{ toYaml $global.glooMtls.envoySidecarResources | indent 10}}
         {{- end}}
         args:
         - proxy
@@ -345,8 +343,6 @@ spec:
         - 45s
         - --parentShutdownDuration
         - 1m0s
-        - --discoveryAddress
-        - istiod.istio-system.svc:15012
         - --proxyLogLevel=warning
         - --proxyComponentLogLevel=misc:error
         - --connectTimeout
@@ -369,11 +365,14 @@ spec:
           - name: PILOT_CERT_PROVIDER
             value: istiod
           - name: CA_ADDR
-            value: istiod.istio-system.svc:15012
+            value: {{ $spec.istioDiscoveryAddress | default "istiod.istio-system.svc:15012" }}
           - name: ISTIO_META_MESH_ID
             value: {{ $spec.istioMetaMeshId | default "cluster.local"}}
           - name: ISTIO_META_CLUSTER_ID
             value: {{ $spec.istioMetaClusterId | default "Kubernetes"}}
+          - name: PROXY_CONFIG
+            value: |
+              {"discoveryAddress": {{ $spec.istioDiscoveryAddress | default "istiod.istio-system.svc:15012" }}}
           - name: POD_NAME
             valueFrom:
               fieldRef:

@@ -88,9 +88,7 @@ var _ = Describe("Happy path", func() {
 	})
 
 	AfterEach(func() {
-		if envoyInstance != nil {
-			_ = envoyInstance.Clean()
-		}
+		envoyInstance.Clean()
 		cancel()
 	})
 
@@ -255,7 +253,9 @@ var _ = Describe("Happy path", func() {
 							},
 							Kind: &gloov1.Secret_Tls{
 								Tls: &gloov1.TlsSecret{
-									RootCa: gloohelpers.Certificate(),
+									PrivateKey: gloohelpers.PrivateKey(),
+									CertChain:  gloohelpers.Certificate(),
+									RootCa:     gloohelpers.Certificate(),
 								},
 							},
 						}
