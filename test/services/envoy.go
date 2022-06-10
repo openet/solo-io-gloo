@@ -330,15 +330,22 @@ func (ef *EnvoyFactory) Clean() error {
 	return nil
 }
 
-func (ei *EnvoyInstance) EnvoyConfig() (*http.Response, error) {
+func (ei *EnvoyInstance) EnvoyConfigDump() (string, error) {
 	adminUrl := fmt.Sprintf("http://%s:%d/config_dump",
 		ei.LocalAddr(),
 		ei.AdminPort)
-	r, err := http.Get(adminUrl)
+	response, err := http.Get(adminUrl)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return r, nil
+
+	configDumpBytes := new(bytes.Buffer)
+	defer response.Body.Close()
+	if _, err := io.Copy(configDumpBytes, response.Body); err != nil {
+		return "", err
+	}
+
+	return configDumpBytes.String(), nil
 }
 
 type EnvoyInstance struct {
@@ -507,7 +514,7 @@ func (ei *EnvoyInstance) runWithAll(eic EnvoyInstanceConfig, bootstrapBuilder En
 		return ei.runContainer(eic.Context())
 	}
 
-	args := []string{"--config-yaml", ei.envoycfg, "--disable-hot-restart", "--log-level", "debug", "--bootstrap-version", "3"}
+	args := []string{"--config-yaml", ei.envoycfg, "--disable-hot-restart", "--log-level", "debug"}
 
 	// run directly
 	cmd := exec.CommandContext(eic.Context(), ei.envoypath, args...)
@@ -553,9 +560,9 @@ func (ei *EnvoyInstance) setRuntimeConfiguration(queryParameters string) error {
 	return err
 }
 
-func (ei *EnvoyInstance) Clean() error {
+func (ei *EnvoyInstance) Clean() {
 	if ei == nil {
-		return nil
+		return
 	}
 	http.Post(fmt.Sprintf("http://localhost:%d/quitquitquit", ei.AdminPort), "", nil)
 	if ei.cmd != nil {
@@ -568,7 +575,6 @@ func (ei *EnvoyInstance) Clean() error {
 		// This is just a backup to make sure it really gets deleted
 		stopContainer()
 	}
-	return nil
 }
 
 func (ei *EnvoyInstance) runContainer(ctx context.Context) error {
@@ -597,7 +603,6 @@ func (ei *EnvoyInstance) runContainer(ctx context.Context) error {
 		image,
 		"--disable-hot-restart",
 		"--log-level", "debug",
-		"--bootstrap-version", "3",
 		"--config-yaml", ei.envoycfg,
 	)
 

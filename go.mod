@@ -12,7 +12,7 @@ require (
 	github.com/aws/aws-sdk-go v1.34.9
 	github.com/cncf/udpa/go v0.0.0-20201120205902-5459f2c99403
 	github.com/containerd/cgroups v0.0.0-20210114181951-8a68de567b68 // indirect
-	github.com/containerd/containerd v1.4.11 // indirect
+	github.com/containerd/containerd v1.4.13 // indirect
 	github.com/containerd/continuity v0.0.0-20210208174643-50096c924a4e // indirect
 	github.com/cratonica/2goarray v0.0.0-20190331194516-514510793eaa
 	github.com/docker/cli v20.10.10+incompatible // indirect
@@ -67,7 +67,6 @@ require (
 	github.com/onsi/gomega v1.10.5
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6 // indirect
-	github.com/opencontainers/runc v1.0.0-rc92 // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/prometheus/client_golang v1.9.0
@@ -81,13 +80,13 @@ require (
 	github.com/solo-io/anyvendor v0.0.4 // indirect
 	github.com/solo-io/go-list-licenses v0.1.0
 	github.com/solo-io/go-utils v0.21.24
-	github.com/solo-io/k8s-utils v0.0.11
+	github.com/solo-io/k8s-utils v0.1.0
 	github.com/solo-io/protoc-gen-ext v0.0.16
 	github.com/solo-io/protoc-gen-openapi v0.0.1
 	github.com/solo-io/skv2 v0.17.17
 	// Pinned to the `gloo-namespaced-statuses` tag of solo-apis
 	github.com/solo-io/solo-apis v0.0.0-20210922150112-505473b2e66c
-	github.com/solo-io/solo-kit v0.24.2
+	github.com/solo-io/solo-kit v0.24.3
 	github.com/solo-io/wasm/tools/wasme/pkg v0.0.0-20201021213306-77f82bdc3cc3
 	github.com/spf13/afero v1.6.0
 	github.com/spf13/cobra v1.1.3
@@ -129,13 +128,13 @@ replace (
 	github.com/apache/thrift => github.com/apache/thrift v0.14.0
 	github.com/census-instrumentation/opencensus-proto => github.com/census-instrumentation/opencensus-proto v0.2.0 // indirect
 	// required for ci
-	github.com/containerd/containerd => github.com/containerd/containerd v1.4.11
+	github.com/containerd/containerd => github.com/containerd/containerd v1.4.13
 
 	// pin to the jwt-go fork to fix CVE.
 	// using the pseudo version of github.com/form3tech-oss/jwt-go@v3.2.3 instead of the version directly,
 	// to avoid error about it being used for two different module paths
 	github.com/dgrijalva/jwt-go => github.com/form3tech-oss/jwt-go v0.0.0-20210511163231-5b2d2b5f6c34
-	github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309
+	github.com/docker/docker => github.com/moby/moby v20.10.14+incompatible
 	github.com/opencontainers/go-digest => github.com/opencontainers/go-digest v1.0.0-rc1
 	// skv2 uses a newer version than the imported solo-kit version which causes issues. Replaces the version with the solo-kit version
 	github.com/pseudomuto/protoc-gen-doc => github.com/pseudomuto/protoc-gen-doc v1.0.0
