@@ -740,6 +740,16 @@ func (m *HeaderConfiguration) Equal(that interface{}) bool {
 		return false
 	}
 
+	if h, ok := interface{}(m.GetUseBearerSchemaForAuthorization()).(equality.Equalizer); ok {
+		if !h.Equal(target.GetUseBearerSchemaForAuthorization()) {
+			return false
+		}
+	} else {
+		if !proto.Equal(m.GetUseBearerSchemaForAuthorization(), target.GetUseBearerSchemaForAuthorization()) {
+			return false
+		}
+	}
+
 	return true
 }
 
@@ -1464,6 +1474,10 @@ func (m *Ldap) Equal(that interface{}) bool {
 		}
 	}
 
+	if m.GetDisableGroupChecking() != target.GetDisableGroupChecking() {
+		return false
+	}
+
 	return true
 }
 
@@ -2063,6 +2077,10 @@ func (m *UserSession_InternalSession) Equal(that interface{}) bool {
 	if target == nil {
 		return m == nil
 	} else if m == nil {
+		return false
+	}
+
+	if strings.Compare(m.GetKeyPrefix(), target.GetKeyPrefix()) != 0 {
 		return false
 	}
 

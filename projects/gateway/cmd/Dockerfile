@@ -1,4 +1,4 @@
-FROM alpine:3.13.8
+FROM alpine:3.15.6
 
 ARG GOARCH=amd64
 

@@ -300,6 +300,10 @@ message RedisOptions {
 
 message UserSession {
     message InternalSession {
+        // Prefix to append to cookie keys, such as for separate domain and subdomain prefixes.
+        // Cookie keys are stored in the form `<key_prefix>_<cookie_name>`.
+        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#attributes
+        string key_prefix = 2;
     }
     message RedisSession {
         // Options to connect to redis
@@ -351,6 +355,8 @@ message HeaderConfiguration {
     string id_token_header = 1;
     // If set, the access token will be forward upstream using this header name.
     string access_token_header = 2;
+    // If true, adds the "Bearer" prefix to the upstream access token header value.
+    google.protobuf.BoolValue use_bearer_schema_for_authorization = 3;
 }
 
 // OIDC configuration is discovered at <issuerUrl>/.well-known/openid-configuration
@@ -740,6 +746,11 @@ message Ldap {
 
     // Use this property to tune the pool of connections to the LDAP server that Gloo maintains.
     ConnectionPool pool = 5;
+
+    // Disables group checking, regardless of the value for allowedGroups,
+    // and disables validation for the membership attribute of the user entry.
+    // Group checking is enabled by default.
+    bool disable_group_checking = 6;
 }
 
 // Authorizes requests by querying a custom extauth server.
