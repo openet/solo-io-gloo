@@ -439,6 +439,18 @@ func (t *translatorInstance) setWeightedClusters(params plugins.RouteParams, mul
 		}
 	}
 
+	// Envoy has a default total weight of 100 and requires all weights to equal the current value of total weight
+	// This overrides the default of 100 to the sum of all passed weights both satisfying the requirements
+	// - that all weights equal total weight
+	// - the passed weights are weighted proportional to each other
+	if totalWeight < 1 {
+		// Envoy errors with:`WeightedClusterValidationError.TotalWeight: value must be greater than or equal to 1`
+		validation.AppendRouteError(routeReport,
+			validationapi.RouteReport_Error_ProcessingError,
+			fmt.Sprintf("Incorrect configuration for Weighted Destination for route - Weighted Destinations require a total weight that is greater than or equal to 1"),
+			routeName,
+		)
+	}
 	clusterSpecifier.WeightedClusters.TotalWeight = &wrappers.UInt32Value{Value: totalWeight}
 
 	return nil

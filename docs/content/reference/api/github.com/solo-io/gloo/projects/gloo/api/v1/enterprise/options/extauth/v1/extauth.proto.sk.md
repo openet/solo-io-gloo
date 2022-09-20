@@ -492,11 +492,13 @@ Deprecated: Prefer OAuth2
 
 
 ```yaml
+"keyPrefix": string
 
 ```
 
 | Field | Type | Description |
 | ----- | ---- | ----------- | 
+| `keyPrefix` | `string` | Prefix to append to cookie keys, such as for separate domain and subdomain prefixes. Cookie keys are stored in the form `<key_prefix>_<cookie_name>`. https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#attributes. |
 
 
 
@@ -557,6 +559,7 @@ Deprecated: Prefer OAuth2
 ```yaml
 "idTokenHeader": string
 "accessTokenHeader": string
+"useBearerSchemaForAuthorization": .google.protobuf.BoolValue
 
 ```
 
@@ -564,6 +567,7 @@ Deprecated: Prefer OAuth2
 | ----- | ---- | ----------- | 
 | `idTokenHeader` | `string` | If set, the id token will be forward upstream using this header name. |
 | `accessTokenHeader` | `string` | If set, the access token will be forward upstream using this header name. |
+| `useBearerSchemaForAuthorization` | [.google.protobuf.BoolValue](https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/bool-value) | If true, adds the "Bearer" prefix to the upstream access token header value. |
 
 
 
@@ -966,6 +970,7 @@ Authenticates and authorizes requests by querying an LDAP server. Gloo makes the
 "membershipAttributeName": string
 "allowedGroups": []string
 "pool": .enterprise.gloo.solo.io.Ldap.ConnectionPool
+"disableGroupChecking": bool
 
 ```
 
@@ -976,6 +981,7 @@ Authenticates and authorizes requests by querying an LDAP server. Gloo makes the
 | `membershipAttributeName` | `string` | Case-insensitive name of the attribute that contains the names of the groups an entry is member of. Gloo will look for attributes with the given name to determine which groups the user entry belongs to. Defaults to 'memberOf' if not provided. |
 | `allowedGroups` | `[]string` | In order for the request to be authenticated, the membership attribute (e.g. *memberOf*) on the user entry must contain at least of one of the group DNs specified via this option. E.g. []string{ "cn=managers,ou=groups,dc=solo,dc=io", "cn=developers,ou=groups,dc=solo,dc=io" }. |
 | `pool` | [.enterprise.gloo.solo.io.Ldap.ConnectionPool](../extauth.proto.sk/#connectionpool) | Use this property to tune the pool of connections to the LDAP server that Gloo maintains. |
+| `disableGroupChecking` | `bool` | Disables group checking, regardless of the value for allowedGroups, and disables validation for the membership attribute of the user entry. Group checking is enabled by default. |
 
 
 

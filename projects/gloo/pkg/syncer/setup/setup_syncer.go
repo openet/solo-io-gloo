@@ -47,9 +47,9 @@ import (
 	corecache "github.com/solo-io/solo-kit/pkg/api/v1/clients/kube/cache"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/memory"
 	"github.com/solo-io/solo-kit/pkg/api/v1/control-plane/cache"
-	"github.com/solo-io/solo-kit/pkg/api/v1/control-plane/resource"
 	"github.com/solo-io/solo-kit/pkg/api/v1/control-plane/server"
 	xdsserver "github.com/solo-io/solo-kit/pkg/api/v1/control-plane/server"
+	"github.com/solo-io/solo-kit/pkg/api/v1/control-plane/types"
 	"github.com/solo-io/solo-kit/pkg/api/v2/reporter"
 	"github.com/solo-io/solo-kit/pkg/errors"
 	"github.com/solo-io/solo-kit/pkg/utils/prototime"
@@ -106,9 +106,12 @@ func NewSetupFuncWithRunAndExtensions(runFunc RunFunc, extensions *Extensions) s
 	return s.Setup
 }
 
+// grpcServer contains grpc server configuration fields we will need to persist after starting a server
+// to later check if they changed and we need to trigger a server restart
 type grpcServer struct {
-	addr   string
-	cancel context.CancelFunc
+	addr            string
+	maxGrpcRecvSize int
+	cancel          context.CancelFunc
 }
 
 type setupSyncer struct {
@@ -124,7 +127,12 @@ type setupSyncer struct {
 
 func NewControlPlane(ctx context.Context, grpcServer *grpc.Server, bindAddr net.Addr, callbacks xdsserver.Callbacks, start bool) bootstrap.ControlPlane {
 	hasher := &xds.ProxyKeyHasher{}
-	snapshotCache := cache.NewSnapshotCache(true, hasher, contextutils.LoggerFrom(ctx))
+	settings := cache.CacheSettings{
+		Ads:    true,
+		Hash:   hasher,
+		Logger: contextutils.LoggerFrom(ctx),
+	}
+	snapshotCache := cache.NewSnapshotCache(settings)
 	xdsServer := server.NewServer(ctx, snapshotCache, callbacks)
 	reflection.Register(grpcServer)
 
@@ -204,9 +212,21 @@ func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, mem
 	}
 	watchNamespaces := utils.ProcessWatchNamespaces(settings.GetWatchNamespaces(), writeNamespace)
 
+	// process grpcserver options to understand if any servers will need a restart
+
+	maxGrpcRecvSize := -1
+	// Use the same maxGrpcMsgSize as validation as this is determined by the size of proxies.
+	if maxGrpcMsgSize := settings.GetGateway().GetValidation().GetValidationServerGrpcMaxSizeBytes(); maxGrpcMsgSize != nil {
+		if maxGrpcMsgSize.GetValue() < 0 {
+			return errors.Errorf("validationServerGrpcMaxSizeBytes in settings CRD must be non-negative, current value: %v", maxGrpcMsgSize.GetValue())
+		}
+		maxGrpcRecvSize = int(maxGrpcMsgSize.GetValue())
+	}
+
 	emptyControlPlane := bootstrap.ControlPlane{}
 	emptyValidationServer := bootstrap.ValidationServer{}
 
+	// check if we need to restart the control plane
 	if xdsAddr != s.previousXdsServer.addr {
 		if s.previousXdsServer.cancel != nil {
 			s.previousXdsServer.cancel()
@@ -215,7 +235,8 @@ func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, mem
 		s.controlPlane = emptyControlPlane
 	}
 
-	if validationAddr != s.previousValidationServer.addr {
+	// check if we need to restart the validation server
+	if validationAddr != s.previousValidationServer.addr || maxGrpcRecvSize != s.previousValidationServer.maxGrpcRecvSize {
 		if s.previousValidationServer.cancel != nil {
 			s.previousValidationServer.cancel()
 			s.previousValidationServer.cancel = nil
@@ -241,16 +262,14 @@ func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, mem
 		// create new context as the grpc server might survive multiple iterations of this loop.
 		ctx, cancel := context.WithCancel(context.Background())
 		var validationGrpcServerOpts []grpc.ServerOption
-		if maxGrpcMsgSize := settings.GetGateway().GetValidation().GetValidationServerGrpcMaxSizeBytes(); maxGrpcMsgSize != nil {
-			if maxGrpcMsgSize.GetValue() < 0 {
-				cancel()
-				return errors.Errorf("validationServerGrpcMaxSizeBytes in settings CRD must be non-negative, current value: %v", maxGrpcMsgSize.GetValue())
-			}
-			validationGrpcServerOpts = append(validationGrpcServerOpts, grpc.MaxRecvMsgSize(int(maxGrpcMsgSize.GetValue())))
+		// if validationServerGrpcMaxSizeBytes was set this will be non-negative, otherwise use gRPC default
+		if maxGrpcRecvSize >= 0 {
+			validationGrpcServerOpts = append(validationGrpcServerOpts, grpc.MaxRecvMsgSize(maxGrpcRecvSize))
 		}
 		s.validationServer = NewValidationServer(ctx, s.makeGrpcServer(ctx, validationGrpcServerOpts...), validationTcpAddress, true)
 		s.previousValidationServer.cancel = cancel
 		s.previousValidationServer.addr = validationAddr
+		s.previousValidationServer.maxGrpcRecvSize = maxGrpcRecvSize
 	}
 
 	consulClient, err := bootstrap.ConsulClientForSettings(ctx, settings)
@@ -688,7 +707,7 @@ func startRestXdsServer(opts bootstrap.Opts) {
 		contextutils.LoggerFrom(opts.WatchOpts.Ctx),
 		opts.ControlPlane.XDSServer,
 		map[string]string{
-			resource.FetchEndpointsV3: resource.EndpointTypeV3,
+			types.FetchEndpointsV3: types.EndpointTypeV3,
 		},
 	)
 	restXdsAddr := opts.Settings.GetGloo().GetRestXdsBindAddr()

@@ -433,6 +433,12 @@ func (m *HeaderConfiguration) Clone() proto.Message {
 
 	target.AccessTokenHeader = m.GetAccessTokenHeader()
 
+	if h, ok := interface{}(m.GetUseBearerSchemaForAuthorization()).(clone.Cloner); ok {
+		target.UseBearerSchemaForAuthorization = h.Clone().(*github_com_golang_protobuf_ptypes_wrappers.BoolValue)
+	} else {
+		target.UseBearerSchemaForAuthorization = proto.Clone(m.GetUseBearerSchemaForAuthorization()).(*github_com_golang_protobuf_ptypes_wrappers.BoolValue)
+	}
+
 	return target
 }
 
@@ -877,6 +883,8 @@ func (m *Ldap) Clone() proto.Message {
 		target.Pool = proto.Clone(m.GetPool()).(*Ldap_ConnectionPool)
 	}
 
+	target.DisableGroupChecking = m.GetDisableGroupChecking()
+
 	return target
 }
 
@@ -1249,6 +1257,8 @@ func (m *UserSession_InternalSession) Clone() proto.Message {
 		return target
 	}
 	target = &UserSession_InternalSession{}
+
+	target.KeyPrefix = m.GetKeyPrefix()
 
 	return target
 }

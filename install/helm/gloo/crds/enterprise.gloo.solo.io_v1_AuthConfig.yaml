@@ -83,6 +83,8 @@ spec:
                           items:
                             type: string
                           type: array
+                        disableGroupChecking:
+                          type: boolean
                         membershipAttributeName:
                           type: string
                         pool:
@@ -243,6 +245,9 @@ spec:
                                   type: string
                                 idTokenHeader:
                                   type: string
+                                useBearerSchemaForAuthorization:
+                                  nullable: true
+                                  type: boolean
                               type: object
                             issuerUrl:
                               type: string
@@ -267,6 +272,9 @@ spec:
                             session:
                               properties:
                                 cookie:
+                                  properties:
+                                    keyPrefix:
+                                      type: string
                                   type: object
                                 cookieOptions:
                                   properties:
