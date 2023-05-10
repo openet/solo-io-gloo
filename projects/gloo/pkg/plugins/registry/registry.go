@@ -126,8 +126,6 @@ func GetPluginRegistryFactory(opts bootstrap.Opts) plugins.PluginRegistryFactory
 	return func(ctx context.Context) plugins.PluginRegistry {
 		availablePlugins := Plugins(opts)
 
-		// To improve the UX, load a plugin that warns users if they are attempting to use enterprise configuration
-		availablePlugins = append(availablePlugins, enterprise_warning.NewPlugin())
 		return NewPluginRegistry(availablePlugins)
 	}
 }
