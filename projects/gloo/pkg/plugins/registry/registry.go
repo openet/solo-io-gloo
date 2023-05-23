@@ -6,10 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/solo-io/go-utils/contextutils"
-
-	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/dynamic_forward_proxy"
-
 	"github.com/solo-io/gloo/projects/gloo/pkg/bootstrap"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/als"
@@ -21,7 +17,8 @@ import (
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/consul"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/cors"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/csrf"
-	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/enterprise_warning"
+	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/deprecated_cipher_passthrough"
+	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/dynamic_forward_proxy"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/extauth"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/faultinjection"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/grpc"
@@ -53,6 +50,7 @@ import (
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/upstreamconn"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/virtualhost"
 	"github.com/solo-io/gloo/projects/gloo/pkg/utils"
+	"github.com/solo-io/go-utils/contextutils"
 )
 
 var (
@@ -105,6 +103,7 @@ func Plugins(opts bootstrap.Opts) []plugins.Plugin {
 		metadata.NewPlugin(),
 		tunneling.NewPlugin(),
 		dynamic_forward_proxy.NewPlugin(),
+		deprecated_cipher_passthrough.NewPlugin(),
 	)
 
 	if opts.KubeClient != nil {
@@ -126,8 +125,6 @@ func GetPluginRegistryFactory(opts bootstrap.Opts) plugins.PluginRegistryFactory
 	return func(ctx context.Context) plugins.PluginRegistry {
 		availablePlugins := Plugins(opts)
 
-		// To improve the UX, load a plugin that warns users if they are attempting to use enterprise configuration
-		availablePlugins = append(availablePlugins, enterprise_warning.NewPlugin())
 		return NewPluginRegistry(availablePlugins)
 	}
 }

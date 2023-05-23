@@ -37,6 +37,7 @@ import (
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	consulapi "github.com/hashicorp/consul/api"
 	vaultapi "github.com/hashicorp/vault/api"
+	errorsEris "github.com/rotisserie/eris"
 	"github.com/solo-io/gloo/pkg/utils"
 	"github.com/solo-io/gloo/pkg/utils/channelutils"
 	"github.com/solo-io/gloo/pkg/utils/setuputils"
@@ -541,6 +542,15 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 	if err := matchableHttpGatewayClient.Register(); err != nil {
 		return err
 	}
+
+	matchableTcpGatewayClient, err := gateway.NewMatchableTcpGatewayClient(watchOpts.Ctx, opts.MatchableTcpGateways)
+	if err != nil {
+		return err
+	}
+	if err := matchableTcpGatewayClient.Register(); err != nil {
+		return err
+	}
+
 	virtualHostOptionClient, err := gateway.NewVirtualHostOptionClient(watchOpts.Ctx, opts.VirtualHostOptions)
 	if err != nil {
 		return err
@@ -562,17 +572,33 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 	// Register grpc endpoints to the grpc server
 	xds.SetupEnvoyXds(opts.ControlPlane.GrpcServer, opts.ControlPlane.XDSServer, opts.ControlPlane.SnapshotCache)
 
-	pluginRegistry := extensions.PluginRegistryFactory(watchOpts.Ctx)
+	logger := contextutils.LoggerFrom(watchOpts.Ctx)
+
+	pluginRegistryFactoryFromGlooWrapper := extensions.PluginRegistryFactory
+
+	pluginRegistryFactory := registry.GetPluginRegistryFactory(opts)
+
+	pluginRegistry := pluginRegistryFactory(watchOpts.Ctx)
+	plugs := pluginRegistry.GetPlugins()
+
+	if pluginRegistryFactoryFromGlooWrapper == nil {
+		logger.Error("No pluginRegistryFactory from GlooWrapper")
+		return errorsEris.Errorf("No pluginRegistryFactory from GlooWrapper")
+	} else {
+		pluginRegistryFromGlooWrapper := pluginRegistryFactoryFromGlooWrapper(watchOpts.Ctx)
+		for _, plug := range pluginRegistryFromGlooWrapper.GetPlugins() {
+			plugs = append(plugs, plug)
+		}
+	}
+
 	var discoveryPlugins []discovery.DiscoveryPlugin
-	for _, plug := range pluginRegistry.GetPlugins() {
+	for _, plug := range plugs {
 		disc, ok := plug.(discovery.DiscoveryPlugin)
 		if ok {
 			disc.Init(plugins.InitParams{Ctx: watchOpts.Ctx, Settings: opts.Settings})
 			discoveryPlugins = append(discoveryPlugins, disc)
 		}
 	}
-
-	logger := contextutils.LoggerFrom(watchOpts.Ctx)
 
 	startRestXdsServer(opts)
 
@@ -626,6 +652,7 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 		virtualHostOptionClient,
 		routeOptionClient,
 		matchableHttpGatewayClient,
+		matchableTcpGatewayClient,
 		graphqlApiClient,
 		extensions.ApiEmitterChannel,
 	)
@@ -638,6 +665,7 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 		authConfigClient.BaseClient(),
 		gatewayClient.BaseClient(),
 		matchableHttpGatewayClient.BaseClient(),
+		matchableTcpGatewayClient.BaseClient(),
 		virtualServiceClient.BaseClient(),
 		rtClient.BaseClient(),
 		virtualHostOptionClient.BaseClient(),
@@ -743,7 +771,15 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 		syncerExtensions = append(syncerExtensions, syncerExtension)
 	}
 
-	sharedTranslator := translator.NewTranslatorWithHasher(sslutils.NewSslConfigTranslator(), opts.Settings, extensions.PluginRegistryFactory(watchOpts.Ctx), resourceHasher)
+	pluginRegistryFactorySum := func(ctx context.Context) plugins.PluginRegistry {
+		return registry.NewPluginRegistry(plugs)
+	}
+
+	for _, plug := range pluginRegistryFactorySum(watchOpts.Ctx).GetPlugins() {
+		logger.Infof("Plugin: %s", plug.Name())
+	}
+
+	sharedTranslator := translator.NewTranslatorWithHasher(sslutils.NewSslConfigTranslator(), opts.Settings, pluginRegistryFactorySum(watchOpts.Ctx), resourceHasher)
 	routeReplacingSanitizer, err := sanitizer.NewRouteReplacingSanitizer(opts.Settings.GetGloo().GetInvalidConfigPolicy())
 	if err != nil {
 		return err
@@ -1096,6 +1132,12 @@ func constructOpts(ctx context.Context, clientset *kubernetes.Interface, kubeCac
 	if err != nil {
 		return bootstrap.Opts{}, err
 	}
+
+	matchableTcpGatewayFactory, err := bootstrap.ConfigFactoryForSettings(params, gateway.MatchableTcpGatewayCrd)
+	if err != nil {
+		return bootstrap.Opts{}, err
+	}
+
 	var validation *gwtranslator.ValidationOpts
 	validationCfg := settings.GetGateway().GetValidation()
 
@@ -1173,6 +1215,7 @@ func constructOpts(ctx context.Context, clientset *kubernetes.Interface, kubeCac
 		RouteOptions:                 routeOptionFactory,
 		Gateways:                     gatewayFactory,
 		MatchableHttpGateways:        matchableHttpGatewayFactory,
+		MatchableTcpGateways:         matchableTcpGatewayFactory,
 		KubeCoreCache:                kubeCoreCache,
 		ValidationOpts:               validation,
 		ReadGatwaysFromAllNamespaces: readGatewaysFromAllNamespaces,
