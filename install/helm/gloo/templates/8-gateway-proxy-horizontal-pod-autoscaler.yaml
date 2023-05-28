@@ -4,6 +4,7 @@
 {{- with (first .) }}
 {{- $gatewayProxy := .Values.gatewayProxies.gatewayProxy -}}
 {{- $spec := deepCopy $gatewaySpec | mergeOverwrite (deepCopy $gatewayProxy) -}}
+{{- if .Values.autoscaling.enabled }}
 {{- if $spec.kind.deployment }}
 {{- if $spec.horizontalPodAutoscaler }}
 apiVersion: {{ $spec.horizontalPodAutoscaler.apiVersion }}
@@ -50,3 +51,4 @@ spec:
 {{- include "gloo.util.merge" (list $ctx $kubeResourceOverride "gatewayProxy.autoscalerSpec") -}}
 {{- end }} {{/* range $name, $gatewaySpec := .Values.gatewayProxies */}}
 {{- end }} {{/* if .Values.gateway.enabled */}}
+{{- end }} {{/* if .Values.autoscaling.enabled */}}
