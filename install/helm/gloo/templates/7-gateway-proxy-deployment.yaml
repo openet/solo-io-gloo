@@ -4,7 +4,6 @@
 {{- define "gatewayProxy.deploymentSpec" }}
 {{- $name := (index . 1) }}
 {{- $gatewaySpec := (index . 2) }}
-{{- $autoscalingEnabled := .Values.autoscaling.enabled }}
 {{- with (first .) }}
 {{- $global := .Values.global }}
 {{- $settings := .Values.settings }}
@@ -40,14 +39,12 @@ metadata:
   name: {{ $name | kebabcase }}
   namespace: {{ $spec.namespace | default .Release.Namespace }}
 spec:
+  {{- if not $spec.horizontalPodAutoscaler.enabled }}
   {{- if $spec.kind.deployment}}
-  {{- if $spec.horizontalPodAutoscaler }}
-  {{- if $spec.horizontalPodAutoscaler.enabled }}
   {{- if $spec.kind.deployment.replicas}}
   replicas: {{ $spec.kind.deployment.replicas }}
   {{- end}}
   {{- end}}
-  {{- end }}
   {{- end }}
   selector:
     matchLabels:
