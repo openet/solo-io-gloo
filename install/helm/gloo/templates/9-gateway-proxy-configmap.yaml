@@ -349,7 +349,7 @@ data:
       ads_config:
         transport_api_version: {{ $spec.envoyApiVersion }}
         api_type: GRPC
-        {{ - with $spec.xdsConfig.rateLimitSettings } }
+        {{- with $spec.xdsConfig.rateLimitSettings }}
         rate_limit_settings:
         {{- range $key, $value := . }}
           {{ $key }}: {{ $value }}
