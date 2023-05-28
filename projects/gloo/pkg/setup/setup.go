@@ -19,6 +19,7 @@ func Main(customCtx context.Context) error {
 }
 
 func startSetupLoop(ctx context.Context) error {
+	contextutils.LoggerFrom(ctx).Info("(2)-> called from projects/gloo/pkg/setup/setup.go/startSetupLoop")
 	return setuputils.Main(setuputils.SetupOpts{
 		LoggerName:  "gloo",
 		Version:     version.Version,
