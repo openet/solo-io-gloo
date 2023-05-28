@@ -120,9 +120,6 @@ func fileOrKubeSettingsClient(ctx context.Context, setupNamespace, settingsDir s
 }
 
 func startLeaderElection(ctx context.Context, settingsDir string, electionConfig *leaderelector.ElectionConfig) (leaderelector.Identity, error) {
-	contextutils.LoggerFrom(ctx).Infow("(4)-> electionConfig == nil: ", electionConfig == nil)
-	contextutils.LoggerFrom(ctx).Infow("(4)-> settingsDir is nonEmpty: ", settingsDir != "")
-	contextutils.LoggerFrom(ctx).Infow("(4)-> leaderelector.IsDisabled(): ", leaderelector.IsDisabled())
 	if electionConfig == nil || settingsDir != "" || leaderelector.IsDisabled() {
 		// If a component does not contain election config, it does not support HA
 		// If the settingsDir is non-empty, it means that Settings are not defined in Kubernetes and therefore we can't use the
