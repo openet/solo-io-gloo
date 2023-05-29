@@ -3,6 +3,7 @@ package setuputils
 import (
 	"context"
 	"flag"
+	"github.com/solo-io/gloo/pkg/utils"
 	"sync"
 	"time"
 
@@ -120,6 +121,27 @@ func fileOrKubeSettingsClient(ctx context.Context, setupNamespace, settingsDir s
 }
 
 func startLeaderElection(ctx context.Context, settingsDir string, electionConfig *leaderelector.ElectionConfig) (leaderelector.Identity, error) {
+
+	electionConfig = &leaderelector.ElectionConfig{
+		Id:        "gloo",
+		Namespace: utils.GetPodNamespace(),
+		// no-op all the callbacks for now
+		// at the moment, leadership functionality is performed within components
+		// in the future we could pull that out and let these callbacks change configuration
+		OnStartedLeading: func(c context.Context) {
+			contextutils.LoggerFrom(c).Info("starting leadership")
+		},
+		OnNewLeader: func(leaderId string) {
+			contextutils.LoggerFrom(ctx).Infof("new leader elected with ID: %s", leaderId)
+		},
+		OnStoppedLeading: func() {
+			// Kill app if we lose leadership, we need to be VERY sure we don't continue
+			// any leader election processes.
+			// https://github.com/solo-io/gloo/issues/7346
+			// There is follow-up work to handle lost leadership more gracefully
+			contextutils.LoggerFrom(ctx).Fatalf("lost leadership, quitting app")
+		},
+	}
 
 	if electionConfig == nil || settingsDir != "" || leaderelector.IsDisabled() {
 		// If a component does not contain election config, it does not support HA
