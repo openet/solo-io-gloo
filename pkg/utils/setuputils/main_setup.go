@@ -72,7 +72,7 @@ func Main(opts SetupOpts) error {
 		return err
 	}
 
-	contextutils.LoggerFrom(ctx).Fatal("(3)-> Before startLeaderElection call in main_setup")
+	contextutils.LoggerFrom(ctx).Info("(3)-> Before startLeaderElection call in main_setup")
 	identity, err := startLeaderElection(ctx, setupDir, opts.ElectionConfig)
 	if err != nil {
 		return err
@@ -120,6 +120,7 @@ func fileOrKubeSettingsClient(ctx context.Context, setupNamespace, settingsDir s
 }
 
 func startLeaderElection(ctx context.Context, settingsDir string, electionConfig *leaderelector.ElectionConfig) (leaderelector.Identity, error) {
+
 	if electionConfig == nil || settingsDir != "" || leaderelector.IsDisabled() {
 		// If a component does not contain election config, it does not support HA
 		// If the settingsDir is non-empty, it means that Settings are not defined in Kubernetes and therefore we can't use the

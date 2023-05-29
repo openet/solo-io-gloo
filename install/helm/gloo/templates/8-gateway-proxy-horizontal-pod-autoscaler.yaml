@@ -4,9 +4,9 @@
 {{- with (first .) }}
 {{- $gatewayProxy := .Values.gatewayProxies.gatewayProxy -}}
 {{- $spec := deepCopy $gatewaySpec | mergeOverwrite (deepCopy $gatewayProxy) -}}
-{{- if .Values.autoscaling.enabled }}
 {{- if $spec.kind.deployment }}
 {{- if $spec.horizontalPodAutoscaler }}
+{{- if $spec.horizontalPodAutoscaler.enabled }}
 apiVersion: {{ $spec.horizontalPodAutoscaler.apiVersion }}
 kind: HorizontalPodAutoscaler
 metadata:
