@@ -309,6 +309,7 @@
 |gateway.validation.webhook.disableHelmHook|bool|false|do not create the webhook as helm hook (default false)|
 |gateway.validation.webhook.timeoutSeconds|int||the timeout for the webhook, defaults to 10|
 |gateway.validation.webhook.extraAnnotations.NAME|string||extra annotations to add to the webhook|
+|gateway.validation.webhook.skipDeleteValidationResources[]|string||resource types in this list will not use webhook valdaition for DELETEs. Use '*' to skip validation for all resources. Valid values are 'virtualservices', 'routetables','upstreams', 'secrets', 'ratelimitconfigs', and '*'. Invalid values will be accepted but will not be used.|
 |gateway.validation.webhook.kubeResourceOverride.NAME|interface||override fields in the generated resource by specifying the yaml structure to override under the top-level key.|
 |gateway.validation.validationServerGrpcMaxSizeBytes|int|104857600|gRPC max message size in bytes for the gloo validation server|
 |gateway.validation.livenessProbeEnabled|bool||Set to true to enable a liveness probe for the gateway (default is false). You must also set the 'Probes' value to true.|
@@ -860,8 +861,8 @@
 |gatewayProxies.gatewayProxy.topologySpreadConstraints[]|interface||configure topologySpreadConstraints for gateway proxy pods|
 |gatewayProxies.gatewayProxy.tracing.provider.NAME|interface|||
 |gatewayProxies.gatewayProxy.tracing.cluster[].NAME|interface|||
-|gatewayProxies.gatewayProxy.xdsConfig.rateLimitSettings.max_tokens|int|||
-|gatewayProxies.gatewayProxy.xdsConfig.rateLimitSettings.fill_rate|double|||
+|gatewayProxies.gatewayProxy.xdsConfig.rateLimitSettings.max_tokens|int||Maximum number of tokens to be used for rate limiting discovery request calls. If not set, a default value of 100 will be used.|
+|gatewayProxies.gatewayProxy.xdsConfig.rateLimitSettings.fill_rate|double||Rate at which tokens will be filled per second. If not set, a default fill rate of 10 tokens per second will be used.|
 |gatewayProxies.gatewayProxy.gatewaySettings.enabled|bool|true|enable/disable default gateways|
 |gatewayProxies.gatewayProxy.gatewaySettings.disableGeneratedGateways|bool||set to true to disable the gateway generation for a gateway proxy|
 |gatewayProxies.gatewayProxy.gatewaySettings.disableHttpGateway|bool||Set to true to disable http gateway generation.|
