@@ -53,5 +53,4 @@ spec:
 {{- $ctx := (list $ $name $gatewaySpec)}}
 {{- include "gloo.util.merge" (list $ctx $kubeResourceOverride "gatewayProxy.autoscalerSpec") -}}
 {{- end }} {{/* range $name, $gatewaySpec := .Values.gatewayProxies */}}
-{{- end }} {{/* if .Values.gateway.enabled */}}
 {{- end }} {{/* if .Values.autoscaling.enabled */}}
