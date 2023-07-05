@@ -39,7 +39,6 @@ spec:
 {{- end }} {{/* if $spec.kind.deployment */}}
 {{- end }} {{/* with */}}
 {{- end }} {{/* define gatewayProxy.autoscalerSpec*/}}
-
 {{- if .Values.gateway.enabled }}
 {{- range $name, $gatewaySpec := .Values.gatewayProxies }}
 {{/* Render each gatewayProxy template with it's yaml overrides */}}
