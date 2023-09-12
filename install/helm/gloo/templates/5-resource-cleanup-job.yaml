@@ -56,7 +56,7 @@ spec:
           - /bin/sh
           - -c
           - |
-            kubectl delete --ignore-not-found validatingwebhookconfigurations.admissionregistration.k8s.io gloo-gateway-validation-webhook-{{ .Release.Namespace }} || exit $?
+            # kubectl delete --ignore-not-found validatingwebhookconfigurations.admissionregistration.k8s.io gloo-gateway-validation-webhook-{{ .Release.Namespace }} || exit $?
 
             if ! kubectl get crd upstreams.gloo.solo.io; then
               echo "Could not find Upstream CRD. Gloo Edge CRDs may have already been deleted. Skipping cleanup of Gloo Edge resources."
@@ -122,6 +122,7 @@ subjects:
   name: gloo-resource-cleanup
   namespace: {{ .Release.Namespace }}
 ---
+{{- if not .Values.global.glooRbac.namespaced -}}
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -160,5 +161,6 @@ subjects:
 - kind: ServiceAccount
   name: gloo-resource-cleanup
   namespace: {{ .Release.Namespace }}
+{{- end -}}{{/*- if not .Values.global.glooRbac.namespaced -*/}}
 {{- end }}{{/* if .Values.global.glooRbac.create */}}
 {{- end }}{{/* if .Values.gateway.cleanupJob.enabled  */}}
