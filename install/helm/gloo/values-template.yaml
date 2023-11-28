@@ -50,6 +50,11 @@ gloo:
     replicas: 1
     runAsUser: 10101
     serviceAccount: {}
+    loopBackAddress: 127.0.0.1
+    livenessProbeEnabled: true
+    readinessProbeEnabled: true
+    customLivenessProbe: {}
+    customReadinessProbe: {}
 discovery:
   enabled: true
   fdsMode: WHITELIST
