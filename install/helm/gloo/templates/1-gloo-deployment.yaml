@@ -4,6 +4,7 @@
 {{- if .Values.global  }}
 {{- $image = merge .Values.gloo.deployment.image .Values.global.image }}
 {{- end }}
+{{- $healthcheckEndpoint := printf "%s:8765/healthz" .Values.gloo.deployment.loopBackAddress  }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -114,7 +115,7 @@ spec:
             - wget
             - -O
             - /dev/null
-            - {{ .Values.gloo.deployment.loopBackAddress }}:8765/healthz
+            - {{ $healthcheckEndpoint }}
           initialDelaySeconds: 3
           periodSeconds: 10
           failureThreshold: 3
@@ -278,7 +279,7 @@ spec:
             - wget
             - -O
             - /dev/null
-            - {{ .Values.gloo.deployment.loopBackAddress }}:8765/healthz
+            - {{ $healthcheckEndpoint }}
           initialDelaySeconds: 3
           periodSeconds: 10
           failureThreshold: 3
