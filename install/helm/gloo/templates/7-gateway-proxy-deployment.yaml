@@ -249,6 +249,7 @@ spec:
 {{ toYaml $spec.podTemplate.resources | indent 10}}
 {{- end}}
 {{- if $spec.podTemplate.probes }}
+{{- if not (and (.Values.glooIssu).enabled ((.Values.glooIssu.readinessProbe).httpGet).path) }}
         readinessProbe:
 {{- if $spec.podTemplate.customReadinessProbe }}
 {{ toYaml $spec.podTemplate.customReadinessProbe | indent 10}}
@@ -262,7 +263,8 @@ spec:
           initialDelaySeconds: 3
           periodSeconds: 10
           failureThreshold: 3
-{{- end}}
+{{- end }}
+{{- end }}
 {{- if $spec.podTemplate.livenessProbeEnabled }}
         livenessProbe:
 {{- if $spec.podTemplate.customLivenessProbe }}
