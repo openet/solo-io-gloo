@@ -4,7 +4,6 @@
 {{- if .Values.global  }}
 {{- $image = merge .Values.gloo.deployment.image .Values.global.image }}
 {{- end }}
-{{- $healthcheckEndpoint := printf "%s:8765/healthz" .Values.gloo.deployment.loopBackAddress  }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -93,7 +92,6 @@ spec:
         - containerPort: {{ .Values.gloo.deployment.restXdsPort }}
           name: rest-xds
           protocol: TCP
-{{- if .Values.gloo.deployment.readinessProbeEnabled }}
         readinessProbe:
 {{- if .Values.gloo.deployment.customReadinessProbe }}
 {{ toYaml .Values.gloo.deployment.customReadinessProbe | indent 10 }}
@@ -104,18 +102,14 @@ spec:
           periodSeconds: 10
           failureThreshold: 3
 {{- end }} {{/* if .Values.gloo.deployment.customReadinessProbe */}}
-{{- end }} {{/* if .Values.gloo.deployment.readinessProbeEnabled */}}
 {{- if .Values.gloo.deployment.livenessProbeEnabled }}
         livenessProbe:
 {{- if .Values.gloo.deployment.customLivenessProbe }}
 {{ toYaml .Values.gloo.deployment.customLivenessProbe | indent 10 }}
 {{- else }}
-          exec:
-            command:
-            - wget
-            - -O
-            - /dev/null
-            - {{ $healthcheckEndpoint }}
+          httpGet:
+            path: /healthz
+            port: 8765
           initialDelaySeconds: 3
           periodSeconds: 10
           failureThreshold: 3
@@ -257,7 +251,6 @@ spec:
             value: "true"
         {{- end}}
 {{- if not .Values.global.glooMtls.enabled }}
-{{- if .Values.gloo.deployment.readinessProbeEnabled }}
         readinessProbe:
 {{- if .Values.gloo.deployment.customReadinessProbe }}
 {{ toYaml .Values.gloo.deployment.customReadinessProbe | indent 10 }}
@@ -268,18 +261,14 @@ spec:
           periodSeconds: 10
           failureThreshold: 3
 {{- end }} {{/* if .Values.gloo.deployment.customReadinessProbe */}}
-{{- end }} {{/* if .Values.gloo.deployment.readinessProbeEnabled */}}
 {{- if .Values.gloo.deployment.livenessProbeEnabled }}
         livenessProbe:
 {{- if .Values.gloo.deployment.customLivenessProbe }}
 {{ toYaml .Values.gloo.deployment.customLivenessProbe | indent 10 }}
 {{- else }}
-          exec:
-            command:
-            - wget
-            - -O
-            - /dev/null
-            - {{ $healthcheckEndpoint }}
+          httpGet:
+            path: /healthz
+            port: 8765
           initialDelaySeconds: 3
           periodSeconds: 10
           failureThreshold: 3
