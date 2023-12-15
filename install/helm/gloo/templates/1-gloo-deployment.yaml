@@ -250,7 +250,6 @@ spec:
           - name: HEADER_SECRET_REF_NS_MATCHES_US
             value: "true"
         {{- end}}
-{{- if not .Values.global.glooMtls.enabled }}
         readinessProbe:
 {{- if .Values.gloo.deployment.customReadinessProbe }}
 {{ toYaml .Values.gloo.deployment.customReadinessProbe | indent 10 }}
@@ -274,7 +273,6 @@ spec:
           failureThreshold: 3
 {{- end }} {{/* if .Values.gloo.deployment.customLivenessProbe */}}
 {{- end }} {{/* if .Values.gloo.deployment.livenessProbeEnabled */}}
-{{- end }} {{/* if not .Values.global.glooMtls.enabled */}}
 {{- with .Values.gloo.deployment.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
