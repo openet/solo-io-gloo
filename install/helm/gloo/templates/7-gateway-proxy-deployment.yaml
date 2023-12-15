@@ -262,7 +262,7 @@ spec:
           initialDelaySeconds: 3
           periodSeconds: 10
           failureThreshold: 3
-{{- end}}
+{{- end }}
 {{- if $spec.podTemplate.livenessProbeEnabled }}
         livenessProbe:
 {{- if $spec.podTemplate.customLivenessProbe }}
