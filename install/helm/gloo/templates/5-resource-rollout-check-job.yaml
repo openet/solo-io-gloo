@@ -38,7 +38,7 @@ spec:
       {{- end }}
     spec:
       {{- include "gloo.pullSecret" $image | nindent 6 -}}
-      serviceAccountName: gloo-resource-rollout
+      serviceAccountName: gloo-resource-rollout-check
       {{- include "gloo.podSpecStandardFields" .Values.gateway.rolloutJob | nindent 6 -}}
       volumes:
         - name: custom-resource-config-volume
@@ -133,5 +133,16 @@ spec:
             else
               echo "no custom resources to check"
             fi
+{{- if .Values.global.glooRbac.create }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: gloo
+    gloo: rbac
+  name: gloo-resource-rollout-check
+  namespace: {{ .Release.Namespace }}
+{{- end -}}{{/* if .Values.global.glooRbac.create */}}
 {{- end }}{{/* if .Values.gateway.rolloutJob.enabled  */}}
 
