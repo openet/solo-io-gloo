@@ -98,10 +98,10 @@ spec:
                     exit 1
                 fi
                 echo "Waiting for the resource rollout job to complete"
-                kubectl -n {{ .Release.Namespace }} wait --for=condition=complete job gloo-resource-rollout --timeout={{ .Values.gateway.rolloutJob.timeout }}s || exit 1
+                kubectl -n {{ .Release.Namespace }} wait --for=condition=complete job gloo-resource-rollout --timeout={{ .Values.gateway.rolloutJob.timeout }}s
 
                 # Clean up the rollout job up so it doesn't cause issues with upgrades
-                kubectl -n {{ .Release.Namespace }} delete job gloo-resource-rollout || exit $?
+                kubectl -n {{ .Release.Namespace }} delete job gloo-resource-rollout
               fi
 
               # If the resource has been applied, re-applying it should output something like this
