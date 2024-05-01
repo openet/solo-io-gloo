@@ -45,6 +45,9 @@ spec:
           image: {{template "gloo.image" $image}}
           imagePullPolicy: {{ $image.pullPolicy }}
           securityContext:
+            {{- if .Values.gateway.rolloutJob.readOnlyRootFilesystem }}
+            readOnlyRootFilesystem: {{ .Values.gateway.rolloutJob.readOnlyRootFilesystem }}
+            {{- end }}
             runAsNonRoot: true
             {{- if not .Values.gateway.rolloutJob.floatingUserId }}
             runAsUser: {{ printf "%.0f" (float64 .Values.gateway.rolloutJob.runAsUser) -}}
