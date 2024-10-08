@@ -273,9 +273,6 @@ spec:
           failureThreshold: 3
 {{- end }} {{/* if .Values.gloo.deployment.customLivenessProbe */}}
 {{- end }} {{/* if .Values.gloo.deployment.livenessProbeEnabled */}}
-{{- with .Values.gloo.deployment.nodeSelector }}
-      nodeSelector:
-{{ toYaml . | indent 8 }}
 {{- end }}
 {{- end }} {{/* define "gloo.deploymentSpec "*/}}
 
