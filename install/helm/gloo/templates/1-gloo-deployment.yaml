@@ -273,7 +273,6 @@ spec:
           failureThreshold: 3
 {{- end }} {{/* if .Values.gloo.deployment.customLivenessProbe */}}
 {{- end }} {{/* if .Values.gloo.deployment.livenessProbeEnabled */}}
-{{- end }}
 {{- end }} {{/* define "gloo.deploymentSpec "*/}}
 
 {{/* Render template with yaml overrides */}}
