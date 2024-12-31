@@ -31,6 +31,9 @@ spec:
 {{- if $spec.service.externalTrafficPolicy }}
   externalTrafficPolicy: {{ $spec.service.externalTrafficPolicy }}
 {{- end }}
+{{- if $spec.service.ipFamilyPolicy }}
+  ipFamilyPolicy: {{ $spec.service.ipFamilyPolicy }}
+{{- end }}
   # port order matters due to this issue: https://github.com/solo-io/gloo/issues/2571
   ports:
 {{- if $spec.service.httpsFirst }}

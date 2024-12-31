@@ -75,6 +75,9 @@ spec:
           {{- if not .Values.gateway.rolloutJob.floatingUserId -}}
             {{- $_ := set $securityDefaults "runAsUser" .Values.gateway.rolloutJob.runAsUser }}
           {{- end -}}
+          {{- if .Values.gateway.rolloutJob.readOnlyRootFilesystem -}}
+            {{- $_ := set $securityDefaults "readOnlyRootFilesystem" .Values.gateway.rolloutJob.readOnlyRootFilesystem }}
+          {{- end -}}
           {{- include "gloo.containerSecurityContext" (dict "values" .Values.gateway.rolloutJob.containerSecurityContext "defaults" $securityDefaults "podSecurityStandards" .Values.global.podSecurityStandards "indent" 10) }}
           {{- with .Values.gateway.rolloutJob.resources }}
           resources: {{ toYaml . | nindent 12}}
