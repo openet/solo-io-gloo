@@ -37,6 +37,9 @@ spec:
     {{- end }}
 {{ toYaml .Values.settings.invalidConfigPolicy | indent 6}}
 {{- end }}
+{{- if .Values.settings.endpointsWarmingTimeout }}
+    endpointsWarmingTimeout: {{ .Values.settings.endpointsWarmingTimeout }}
+{{- end }}
     disableKubernetesDestinations: {{ .Values.settings.disableKubernetesDestinations | default false }}
     disableProxyGarbageCollection: {{ .Values.settings.disableProxyGarbageCollection | default false }}
 {{- if .Values.settings.regexMaxProgramSize }}
