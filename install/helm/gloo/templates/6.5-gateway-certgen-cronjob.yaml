@@ -45,6 +45,9 @@ spec:
               imagePullPolicy: {{ $image.pullPolicy }}
               name: certgen
               securityContext:
+                {{- if .Values.gateway.certGenJob.readOnlyRootFilesystem }}
+                readOnlyRootFilesystem: {{ .Values.gateway.certGenJob.readOnlyRootFilesystem }}
+                {{- end }}
                 runAsNonRoot: true
                 {{- if not .Values.gateway.certGenJob.floatingUserId }}
                 runAsUser: {{ printf "%.0f" (float64 .Values.gateway.certGenJob.runAsUser) -}}
