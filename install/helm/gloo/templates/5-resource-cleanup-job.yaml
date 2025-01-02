@@ -164,6 +164,6 @@ subjects:
 - kind: ServiceAccount
   name: gloo-resource-cleanup
   namespace: {{ .Release.Namespace }}
-{{- if not .Values.global.glooRbac.namespaced -}}
+{{- end }}{{/* if not .Values.global.glooRbac.namespaced */}}
 {{- end }}{{/* if .Values.global.glooRbac.create */}}
 {{- end }}{{/* if .Values.gateway.cleanupJob.enabled  */}}
