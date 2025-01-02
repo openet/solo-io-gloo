@@ -101,7 +101,7 @@ spec:
           initialDelaySeconds: 3
           periodSeconds: 10
           failureThreshold: 3
-{{- end }} {{ /* if .Values.gloo.deployment.customReadinessProbe */}}
+{{- end }} {{/* if .Values.gloo.deployment.customReadinessProbe */}}
 {{- if .Values.gloo.deployment.livenessProbeEnabled }}
         livenessProbe:
 {{- if .Values.gloo.deployment.customLivenessProbe }}
