@@ -4,7 +4,6 @@
 {{- define "gatewayProxy.deploymentSpec" }}
 {{- $name := (index . 1) }}
 {{- $gatewaySpec := (index . 2) }}
-{{- $nfServiceTypes := coalesce .Values.nfServiceTypes (.Values.global.ingress).nfServiceTypes -}}
 {{- with (first .) }}
 {{- $global := .Values.global }}
 {{- $settings := .Values.settings }}
@@ -81,6 +80,7 @@ spec:
         # This annotation was introduced to resolve https://github.com/solo-io/gloo/issues/8392
         # It triggers a new rollout of the gateway proxy if the values in this config map changes.
         checksum/{{ $name | kebabcase }}-envoy-config: {{ $gatewaySpec.checksum }}
+      {{- $nfServiceTypes := coalesce .Values.nfServiceTypes ($global.ingress).nfServiceTypes -}}
       {{- if $nfServiceTypes }}
         nf-service-types:
 {{ toYaml $nfServiceTypes | indent 10 }}
