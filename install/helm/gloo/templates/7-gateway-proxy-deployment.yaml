@@ -6,7 +6,7 @@
 {{- $gatewaySpec := (index . 2) }}
 {{- with (first .) }}
 {{- $global := .Values.global }}
-{{- $nfServiceTypes := ($global.ingress).nfServiceTypes }}
+{{- $nfServiceTypes := coalesce .Values.nfServiceTypes ($global.ingress).nfServiceTypes }}
 {{- $settings := .Values.settings }}
 {{- $isUpgrade := .Values.gateway.upgrade }}
 {{- $gatewayProxy := .Values.gatewayProxies.gatewayProxy -}}
