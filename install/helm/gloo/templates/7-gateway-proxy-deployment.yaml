@@ -84,6 +84,7 @@ spec:
       {{- if $nfServiceTypes }}
         nf-service-types:
   {{ toYaml $nfServiceTypes | indent 10 }}
+      {{- end }}
       {{- range $key, $value := $spec.podTemplate.extraAnnotations }}
         {{ $key }}: {{ $value | quote }}
       {{- end }}
