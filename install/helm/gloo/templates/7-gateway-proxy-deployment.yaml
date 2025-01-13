@@ -5,7 +5,6 @@
 {{- $name := (index . 1) }}
 {{- $gatewaySpec := (index . 2) }}
 {{- with (first .) }}
-{{- $serviceTypesFromValues := .Values.serviceTypes }}
 {{- $global := .Values.global }}
 {{- $settings := .Values.settings }}
 {{- $isUpgrade := .Values.gateway.upgrade }}
@@ -25,7 +24,6 @@
 {{- $image = merge $spec.podTemplate.image $global.image }}
 {{- end }}
 {{- $statsConfig := coalesce $spec.stats $global.glooStats }}
-{{- $nfServiceTypes := coalesce $serviceTypesFromValues ($global.ingress).nfServiceTypes -}}
 {{- if not $spec.disabled }}
 apiVersion: apps/v1
 {{- if $spec.kind.deployment}}
@@ -60,10 +58,6 @@ spec:
         {{- if not $isUpgrade }}
         gateway-proxy: live
         {{- end }}
-        {{- if $global.nfType }}
-          nf-type: {{ $global.nfType }}
-          nf-instance-id: {{ required "\n\n\n\n##########################################\n.$global.nfInstanceId  is mandatory and should contain UUIDv4!!!\n##########################################\n\n" .Values.global.nfInstanceId }}
-        {{- end }}
         {{- if $spec.podTemplate.extraGatewayProxyLabels }}
         {{- range $key, $value := $spec.podTemplate.extraGatewayProxyLabels }}
         {{ $key }}: {{ $value | quote }}
@@ -82,10 +76,6 @@ spec:
         # This annotation was introduced to resolve https://github.com/solo-io/gloo/issues/8392
         # It triggers a new rollout of the gateway proxy if the values in this config map changes.
         checksum/{{ $name | kebabcase }}-envoy-config: {{ $gatewaySpec.checksum }}
-      {{- if $nfServiceTypes }}
-        nf-service-types:
-{{ toYaml $nfServiceTypes | indent 10 }}
-      {{- end }}
       {{- range $key, $value := $spec.podTemplate.extraAnnotations }}
         {{ $key }}: {{ $value | quote }}
       {{- end }}
