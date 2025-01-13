@@ -5,6 +5,7 @@
 {{- $name := (index . 1) }}
 {{- $gatewaySpec := (index . 2) }}
 {{- with (first .) }}
+{{- $serviceTypesFromValues := .Values.serviceTypes }}
 {{- $global := .Values.global }}
 {{- $settings := .Values.settings }}
 {{- $isUpgrade := .Values.gateway.upgrade }}
@@ -24,6 +25,7 @@
 {{- $image = merge $spec.podTemplate.image $global.image }}
 {{- end }}
 {{- $statsConfig := coalesce $spec.stats $global.glooStats }}
+{{- $nfServiceTypes := coalesce $serviceTypesFromValues ($global.ingress).nfServiceTypes -}}
 {{- if not $spec.disabled }}
 apiVersion: apps/v1
 {{- if $spec.kind.deployment}}
@@ -80,7 +82,6 @@ spec:
         # This annotation was introduced to resolve https://github.com/solo-io/gloo/issues/8392
         # It triggers a new rollout of the gateway proxy if the values in this config map changes.
         checksum/{{ $name | kebabcase }}-envoy-config: {{ $gatewaySpec.checksum }}
-      {{- $nfServiceTypes := coalesce .Values.nfServiceTypes ($global.ingress).nfServiceTypes -}}
       {{- if $nfServiceTypes }}
         nf-service-types:
 {{ toYaml $nfServiceTypes | indent 10 }}
