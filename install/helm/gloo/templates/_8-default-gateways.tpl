@@ -29,14 +29,14 @@ spec:
     options:
       httpConnectionManagerSettings:
         serverName: {{ .Values.global.nfType }}-{{ .Values.global.nfInstanceId }}
-  {{- if ((.Values.httpConnectionManager).idleTimeout) }}
-        idleTimeout: {{ .Values.httpConnectionManager.idleTimeout }}
+  {{- if ((.Values.gloo.httpConnectionManager).idleTimeout) }}
+        idleTimeout: {{ .Values.gloo.httpConnectionManager.idleTimeout }}
   {{- end }}
 
-  {{- if .Values.gatewayProxyExtensions }}
+  {{- if .Values.gloo.gatewayProxyExtensions }}
       extensions:
         configs:
-{{ toYaml .Values.gatewayProxyExtensions | indent 10 }}
+{{ toYaml .Values.gloo.gatewayProxyExtensions | indent 10 }}
   {{- end }}
 {{- else if $spec.tracing }}
 {{- if $spec.tracing.provider }}
@@ -99,14 +99,14 @@ spec:
     options:
       httpConnectionManagerSettings:
         serverName: {{ .Values.global.nfType }}-{{ .Values.global.nfInstanceId }}
-  {{- if ((.Values.httpConnectionManager).idleTimeout) }}
-        idleTimeout: {{ .Values.httpConnectionManager.idleTimeout }}
+  {{- if ((.Values.gloo.httpConnectionManager).idleTimeout) }}
+        idleTimeout: {{ .Values.gloo.httpConnectionManager.idleTimeout }}
   {{- end }}
 
-  {{- if .Values.gatewayProxyExtensions }}
+  {{- if .Values.gloo.gatewayProxyExtensions }}
       extensions:
         configs:
-{{ toYaml .Values.gatewayProxyExtensions | indent 10 }}
+{{ toYaml .Values.gloo.gatewayProxyExtensions | indent 10 }}
   {{- end }}
 {{- else if $spec.tracing }}
 {{- if $spec.tracing.provider }}
