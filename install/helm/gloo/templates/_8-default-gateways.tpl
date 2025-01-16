@@ -24,6 +24,20 @@ spec:
 {{- if $gatewaySettings.customHttpGateway}}
   httpGateway:
 {{ toYaml $gatewaySettings.customHttpGateway | indent 4}}
+{{- else if and .Values.global.nfType .Values.global.nfInstanceId }}
+  httpGateway:
+    options:
+      httpConnectionManagerSettings:
+        serverName: {{ .Values.global.nfType }}-{{ .Values.global.nfInstanceId }}
+  {{- if ((.Values.httpConnectionManager).idleTimeout) }}
+        idleTimeout: {{ .Values.httpConnectionManager.idleTimeout }}
+  {{- end }}
+
+  {{- if .Values.gatewayProxyExtensions }}
+      extensions:
+        configs:
+{{ toYaml .Values.gatewayProxyExtensions | indent 10 }}
+  {{- end }}
 {{- else if $spec.tracing }}
 {{- if $spec.tracing.provider }}
   httpGateway:
@@ -80,6 +94,20 @@ spec:
 {{- if $gatewaySettings.customHttpsGateway }}
   httpGateway:
 {{ toYaml $gatewaySettings.customHttpsGateway | indent 4}}
+{{- else if and .Values.global.nfType .Values.global.nfInstanceId }}
+  httpGateway:
+    options:
+      httpConnectionManagerSettings:
+        serverName: {{ .Values.global.nfType }}-{{ .Values.global.nfInstanceId }}
+  {{- if ((.Values.httpConnectionManager).idleTimeout) }}
+        idleTimeout: {{ .Values.httpConnectionManager.idleTimeout }}
+  {{- end }}
+
+  {{- if .Values.gatewayProxyExtensions }}
+      extensions:
+        configs:
+{{ toYaml .Values.gatewayProxyExtensions | indent 10 }}
+  {{- end }}
 {{- else if $spec.tracing }}
 {{- if $spec.tracing.provider }}
   httpGateway:
