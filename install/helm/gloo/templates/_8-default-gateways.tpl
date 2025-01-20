@@ -1,11 +1,12 @@
 {{- define "gatewayTemplate" }}
 {{- $gatewayType := .gatewayType }}
+{{- $tracingProvider := .tracingProvider }}
 {{- $gatewaySettings := index $gatewaySettings $gatewayType }}
 {{- $gateway := dict }}
 {{- if $gatewaySettings }}
   {{- $_ := set $gateway "httpGateway" $gatewaySettings }}
-{{- else if ($spec.tracing).provider }}
-  {{- $_ := set $gateway "httpGateway" (dict "options" (dict "httpConnectionManagerSettings" (dict "tracing" $spec.tracing.provider))) }}
+{{- else if $tracingProvider }}
+  {{- $_ := set $gateway "httpGateway" (dict "options" (dict "httpConnectionManagerSettings" (dict "tracing" $tracingProvider))) }}
 {{- else }}
   {{- $_ := set $gateway "httpGateway" (dict) }}
 {{- end }}
@@ -49,7 +50,7 @@ spec:
 {{ toYaml $gatewaySettings.httpHybridGateway | indent 2}}
 {{- end }}
 # Call the gatewayTemplate for customHttpGateway
-{{- include "gatewayTemplate" (dict "gatewayType" "customHttpGateway") }}
+{{- include "gatewayTemplate" (dict "gatewayType" "customHttpGateway" "tracingProvider" ($spec.tracing).provider) }}
 {{- if or ($gatewaySettings.options) ($gatewaySettings.accessLoggingService) }}
   options:
 {{- end }}
@@ -93,7 +94,7 @@ spec:
 {{ toYaml $gatewaySettings.httpsHybridGateway | indent 2}}
 {{- end }}
 # Call the gatewayTemplate for customHttpsGateway
-{{- include "gatewayTemplate" (dict "gatewayType" "customHttpsGateway") }}
+{{- include "gatewayTemplate" (dict "gatewayType" "customHttpsGateway" "tracingProvider" ($spec.tracing).provider) }}
 {{- if or ($gatewaySettings.options) ($gatewaySettings.accessLoggingService) }}
   options:
 {{- end }}
