@@ -1,7 +1,8 @@
 {{- define "gatewayTemplate" }}
+{{- $allGatewaySettings := .gatewaySettings }}
 {{- $gatewayType := .gatewayType }}
 {{- $tracingProvider := .tracingProvider }}
-{{- $gatewaySettings := index $gatewaySettings $gatewayType }}
+{{- $gatewaySettings := index $allGatewaySettings $gatewayType }}
 {{- $gateway := dict }}
 {{- if $gatewaySettings }}
   {{- $_ := set $gateway "httpGateway" $gatewaySettings }}
@@ -50,7 +51,7 @@ spec:
 {{ toYaml $gatewaySettings.httpHybridGateway | indent 2}}
 {{- end }}
 # Call the gatewayTemplate for customHttpGateway
-{{- include "gatewayTemplate" (dict "gatewayType" "customHttpGateway" "tracingProvider" ($spec.tracing).provider) }}
+{{- include "gatewayTemplate" (dict "gatewaySettings" $gatewaySettings "gatewayType" "customHttpGateway" "tracingProvider" ($spec.tracing).provider) }}
 {{- if or ($gatewaySettings.options) ($gatewaySettings.accessLoggingService) }}
   options:
 {{- end }}
@@ -94,7 +95,7 @@ spec:
 {{ toYaml $gatewaySettings.httpsHybridGateway | indent 2}}
 {{- end }}
 # Call the gatewayTemplate for customHttpsGateway
-{{- include "gatewayTemplate" (dict "gatewayType" "customHttpsGateway" "tracingProvider" ($spec.tracing).provider) }}
+{{- include "gatewayTemplate" (dict "gatewaySettings" $gatewaySettings "gatewayType" "customHttpsGateway" "tracingProvider" ($spec.tracing).provider) }}
 {{- if or ($gatewaySettings.options) ($gatewaySettings.accessLoggingService) }}
   options:
 {{- end }}
