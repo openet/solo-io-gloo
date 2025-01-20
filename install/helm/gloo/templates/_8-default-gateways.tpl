@@ -12,8 +12,10 @@
   {{- $_ := set $gateway "httpGateway" (dict) }}
 {{- end }}
 
-{{- if (.Values.httpConnectionManager).idleTimeout }}
+{{- if .Values.httpConnectionManager }}
+{{- if .Values.httpConnectionManager.idleTimeout }}
   {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "idleTimeout" .Values.httpConnectionManager.idleTimeout ))) }}
+{{- end }}
 {{- end }}
 
 {{- if .Values.gatewayProxyExtensions }}
