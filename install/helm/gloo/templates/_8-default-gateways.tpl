@@ -1,3 +1,30 @@
+{{- define "gatewayTemplate" }}
+{{- $gatewayType := .gatewayType }}
+{{- $gatewaySettings := index $gatewaySettings $gatewayType }}
+{{- $gateway := dict }}
+{{- if $gatewaySettings }}
+  {{- $_ := set $gateway "httpGateway" $gatewaySettings }}
+{{- else if ($spec.tracing).provider }}
+  {{- $_ := set $gateway "httpGateway" (dict "options" (dict "httpConnectionManagerSettings" (dict "tracing" $spec.tracing.provider))) }}
+{{- else }}
+  {{- $_ := set $gateway "httpGateway" (dict) }}
+{{- end }}
+
+{{- if and .Values.global.nfType .Values.global.nfInstanceId }}
+  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "serverName" "{{ .Values.global.nfType }}-{{ .Values.global.nfInstanceId }}"))) }}
+{{- end }}
+
+{{- if (.Values.httpConnectionManager).idleTimeout }}
+  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "idleTimeout" {{ .Values.httpConnectionManager.idleTimeout }}))) }}
+{{- end }}
+
+{{- if .Values.gatewayProxyExtensions }}
+  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "extensions" (dict "configs" {{ toYaml .Values.gatewayProxyExtensions }}))) }}
+{{- end }}
+
+{{- toYaml $gateway | indent 2 }}
+{{- end }}
+
 {{- define "defaultGateway.gateway" -}}
 {{- $name := (index . 1) }}
 {{- $spec := (index . 2) }}
@@ -21,34 +48,8 @@ spec:
 {{- if $gatewaySettings.httpHybridGateway }}
 {{ toYaml $gatewaySettings.httpHybridGateway | indent 2}}
 {{- end }}
-{{- if $gatewaySettings.customHttpGateway}}
-  httpGateway:
-{{ toYaml $gatewaySettings.customHttpGateway | indent 4}}
-{{- else if and .Values.global.nfType .Values.global.nfInstanceId }}
-  httpGateway:
-    options:
-      httpConnectionManagerSettings:
-        serverName: {{ .Values.global.nfType }}-{{ .Values.global.nfInstanceId }}
-  {{- if ((.Values.httpConnectionManager).idleTimeout) }}
-        idleTimeout: {{ .Values.httpConnectionManager.idleTimeout }}
-  {{- end }}
-
-  {{- if .Values.gatewayProxyExtensions }}
-      extensions:
-        configs:
-{{ toYaml .Values.gatewayProxyExtensions | indent 10 }}
-  {{- end }}
-{{- else if $spec.tracing }}
-{{- if $spec.tracing.provider }}
-  httpGateway:
-    options:
-      httpConnectionManagerSettings:
-        tracing:
-{{ toYaml $spec.tracing.provider | indent 10 }}
-{{- end }}
-{{- else }}
-  httpGateway: {}
-{{- end }}
+# Call the gatewayTemplate for customHttpGateway
+{{- include "gatewayTemplate" (dict "gatewayType" "customHttpGateway") }}
 {{- if or ($gatewaySettings.options) ($gatewaySettings.accessLoggingService) }}
   options:
 {{- end }}
@@ -91,34 +92,8 @@ spec:
 {{- if $gatewaySettings.httpsHybridGateway }}
 {{ toYaml $gatewaySettings.httpsHybridGateway | indent 2}}
 {{- end }}
-{{- if $gatewaySettings.customHttpsGateway }}
-  httpGateway:
-{{ toYaml $gatewaySettings.customHttpsGateway | indent 4}}
-{{- else if and .Values.global.nfType .Values.global.nfInstanceId }}
-  httpGateway:
-    options:
-      httpConnectionManagerSettings:
-        serverName: {{ .Values.global.nfType }}-{{ .Values.global.nfInstanceId }}
-  {{- if ((.Values.httpConnectionManager).idleTimeout) }}
-        idleTimeout: {{ .Values.httpConnectionManager.idleTimeout }}
-  {{- end }}
-
-  {{- if .Values.gatewayProxyExtensions }}
-      extensions:
-        configs:
-{{ toYaml .Values.gatewayProxyExtensions | indent 10 }}
-  {{- end }}
-{{- else if $spec.tracing }}
-{{- if $spec.tracing.provider }}
-  httpGateway:
-    options:
-      httpConnectionManagerSettings:
-        tracing:
-{{ toYaml $spec.tracing.provider | indent 10 }}
-{{- end }}{{/* if $spec.tracing.provider */}}
-{{- else }}
-  httpGateway: {}
-{{- end }}{{/* if $gatewaySettings.customHttpsGateway */}}
+# Call the gatewayTemplate for customHttpsGateway
+{{- include "gatewayTemplate" (dict "gatewayType" "customHttpsGateway") }}
 {{- if or ($gatewaySettings.options) ($gatewaySettings.accessLoggingService) }}
   options:
 {{- end }}
