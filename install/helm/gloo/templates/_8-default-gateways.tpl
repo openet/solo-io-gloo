@@ -12,10 +12,6 @@
   {{- $_ := set $gateway "httpGateway" (dict) }}
 {{- end }}
 
-{{- if and (.Values.global).nfType .Values.global.nfInstanceId }}
-  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "serverName" (printf "%s-%s" .Values.global.nfType .Values.global.nfInstanceId)))) }}
-{{- end }}
-
 {{- if (.Values.httpConnectionManager).idleTimeout }}
   {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "idleTimeout" .Values.httpConnectionManager.idleTimeout ))) }}
 {{- end }}
