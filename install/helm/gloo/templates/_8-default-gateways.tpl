@@ -12,7 +12,7 @@
   {{- $_ := set $gateway "httpGateway" (dict) }}
 {{- end }}
 
-{{- if and .Values.global.nfType .Values.global.nfInstanceId }}
+{{- if and (.Values.global).nfType .Values.global.nfInstanceId }}
   {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "serverName" (printf "%s-%s" .Values.global.nfType .Values.global.nfInstanceId)))) }}
 {{- end }}
 
