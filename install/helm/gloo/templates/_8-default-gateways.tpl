@@ -1,8 +1,8 @@
-{{- define "gatewayTemplate" }}
+{{- define "httpGatewayTemplate" }}
 {{- $allGatewaySettings := .gatewaySettings }}
 {{- $gatewayType := .gatewayType }}
 {{- $tracingProvider := .tracingProvider }}
-{{- $global := .global }}
+{{- $context := .context }}
 {{- $httpConnectionManagerIdleTimeout := .httpConnectionManagerIdleTimeout }}
 {{- $gatewayProxyExtensions := .gatewayProxyExtensions }}
 {{- $gatewaySettings := index $allGatewaySettings $gatewayType }}
@@ -15,16 +15,16 @@
   {{- $_ := set $gateway "httpGateway" (dict) }}
 {{- end }}
 
-{{- if and $global.nfType $global.nfInstanceId }}
-  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "serverName" (printf "%s-%s" $global.nfType $global.nfInstanceId)))) }}
+{{- if and ($context.global).nfType $context.global.nfInstanceId }}
+  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "serverName" (printf "%s-%s" $context.global.nfType $context.global.nfInstanceId)))) }}
 {{- end }}
 
-{{- if $httpConnectionManagerIdleTimeout }}
-  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "idleTimeout" $httpConnectionManagerIdleTimeout ))) }}
+{{- if ($context.httpConnectionManager).idleTimeout }}
+  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "idleTimeout" $context.httpConnectionManager.idleTimeout))) }}
 {{- end }}
 
-{{- if $gatewayProxyExtensions }}
-  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "extensions" (dict "configs" $gatewayProxyExtensions))) }}
+{{- if $context.gatewayProxyExtensions }}
+  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "extensions" (dict "configs" $context.gatewayProxyExtensions))) }}
 {{- end }}
 
 {{- toYaml $gateway | indent 2 }}
@@ -34,9 +34,6 @@
 {{- $name := (index . 1) }}
 {{- $spec := (index . 2) }}
 {{- with (first .) }}
-{{- $global := .Values.global }}
-{{- $httpConnectionManagerIdleTimeout := (.Values.httpConnectionManager).idleTimeout }}
-{{- $gatewayProxyExtensions := .Values.gatewayProxyExtensions }}
 {{- $gatewaySettings := $spec.gatewaySettings }}
 {{- if $gatewaySettings.enabled }}
 apiVersion: gateway.solo.io/v1
@@ -57,7 +54,7 @@ spec:
 {{ toYaml $gatewaySettings.httpHybridGateway | indent 2}}
 {{- end }}
 # Call the gatewayTemplate for customHttpGateway
-{{- include "gatewayTemplate" (dict "gatewaySettings" $gatewaySettings "gatewayType" "customHttpGateway" "global" $global "tracingProvider" ($spec.tracing).provider "httpConnectionManagerIdleTimeout" $httpConnectionManagerIdleTimeout "gatewayProxyExtensions" $gatewayProxyExtensions) }}
+{{- include "httpGatewayTemplate" (dict "gatewaySettings" $gatewaySettings "gatewayType" "customHttpGateway" "context" . "tracingProvider" ($spec.tracing).provider) }}
 {{- if or ($gatewaySettings.options) ($gatewaySettings.accessLoggingService) }}
   options:
 {{- end }}
@@ -104,7 +101,7 @@ spec:
 {{ toYaml $gatewaySettings.httpsHybridGateway | indent 2}}
 {{- end }}
 # Call the gatewayTemplate for customHttpsGateway
-{{- include "gatewayTemplate" (dict "gatewaySettings" $gatewaySettings "gatewayType" "customHttpsGateway"  "global" $global "tracingProvider" ($spec.tracing).provider "httpConnectionManagerIdleTimeout" $httpConnectionManagerIdleTimeout "gatewayProxyExtensions" $gatewayProxyExtensions) }}
+{{- include "httpGatewayTemplate" (dict "gatewaySettings" $gatewaySettings "gatewayType" "customHttpsGateway"  "context" . "tracingProvider" ($spec.tracing).provider) }}
 {{- if or ($gatewaySettings.options) ($gatewaySettings.accessLoggingService) }}
   options:
 {{- end }}
