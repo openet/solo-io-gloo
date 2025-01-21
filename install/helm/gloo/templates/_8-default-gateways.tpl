@@ -3,9 +3,9 @@
 {{- $gatewayType := .gatewayType }}
 {{- $tracingProvider := .tracingProvider }}
 {{- $context := .context }}
-{{- $gatewaySettings := index $allGatewaySettings $gatewayType }}
 {{- $gateway := dict }}
-{{- if $gatewaySettings }}
+{{- if hasKey $allGatewaySettings $gatewayType }}
+  {{- $gatewaySettings := index $allGatewaySettings $gatewayType }}
   {{- $_ := set $gateway "httpGateway" $gatewaySettings }}
 {{- else if $tracingProvider }}
   {{- $_ := set $gateway "httpGateway" (dict "options" (dict "httpConnectionManagerSettings" (dict "tracing" $tracingProvider))) }}
