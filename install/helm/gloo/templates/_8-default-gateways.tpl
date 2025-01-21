@@ -23,7 +23,7 @@
   {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "idleTimeout" $httpConnectionManagerIdleTimeout ))) }}
 {{- end }}
 
-{{- $gatewayProxyExtensions }}
+{{- if $gatewayProxyExtensions }}
   {{- $_ := merge $gateway.httpGateway (dict "options" (dict "extensions" (dict "configs" $gatewayProxyExtensions))) }}
 {{- end }}
 
