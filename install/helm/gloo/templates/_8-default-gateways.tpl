@@ -57,7 +57,7 @@ spec:
 {{ toYaml $gatewaySettings.httpHybridGateway | indent 2}}
 {{- end }}
 # Call the gatewayTemplate for customHttpGateway
-{{- include "gatewayTemplate" (dict "gatewaySettings" $gatewaySettings "gatewayType" "customHttpGateway" "global" $global "tracingProvider" ($spec.tracing).provider) "httpConnectionManagerIdleTimeout" $httpConnectionManagerIdleTimeout "gatewayProxyExtensions" $gatewayProxyExtensions }}
+{{- include "gatewayTemplate" (dict "gatewaySettings" $gatewaySettings "gatewayType" "customHttpGateway" "global" $global "tracingProvider" ($spec.tracing).provider "httpConnectionManagerIdleTimeout" $httpConnectionManagerIdleTimeout "gatewayProxyExtensions" $gatewayProxyExtensions) }}
 {{- if or ($gatewaySettings.options) ($gatewaySettings.accessLoggingService) }}
   options:
 {{- end }}
@@ -104,7 +104,7 @@ spec:
 {{ toYaml $gatewaySettings.httpsHybridGateway | indent 2}}
 {{- end }}
 # Call the gatewayTemplate for customHttpsGateway
-{{- include "gatewayTemplate" (dict "gatewaySettings" $gatewaySettings "gatewayType" "customHttpsGateway"  "global" $global "tracingProvider" ($spec.tracing).provider) "httpConnectionManagerIdleTimeout" $httpConnectionManagerIdleTimeout "gatewayProxyExtensions" $gatewayProxyExtensions }}
+{{- include "gatewayTemplate" (dict "gatewaySettings" $gatewaySettings "gatewayType" "customHttpsGateway"  "global" $global "tracingProvider" ($spec.tracing).provider "httpConnectionManagerIdleTimeout" $httpConnectionManagerIdleTimeout "gatewayProxyExtensions" $gatewayProxyExtensions) }}
 {{- if or ($gatewaySettings.options) ($gatewaySettings.accessLoggingService) }}
   options:
 {{- end }}
