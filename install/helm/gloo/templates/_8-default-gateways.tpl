@@ -81,6 +81,9 @@ spec:
 {{- $name := (index . 1) }}
 {{- $spec := (index . 2) }}
 {{- with (first .) }}
+{{- $global := .Values.global }}
+{{- $httpConnectionManagerIdleTimeout := (.Values.httpConnectionManager).idleTimeout }}
+{{- $gatewayProxyExtensions := .Values.gatewayProxyExtensions }}
 {{- $gatewaySettings := $spec.gatewaySettings }}
 {{- if $gatewaySettings.enabled }}
 apiVersion: gateway.solo.io/v1
