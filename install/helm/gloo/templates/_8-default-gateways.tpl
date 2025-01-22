@@ -1,9 +1,10 @@
 {{- define "httpGatewayTemplate" }}
-{{- $allGatewaySettings := .gatewaySettings }}
-{{- $gatewayType := .gatewayType }}
-{{- $tracingProvider := .tracingProvider }}
-{{- $context := .context }}
+{{- $contextValues := index . 0 }}
+{{- $gatewayType := index . 1 }}
+{{- $allGatewaySettings := index . 2 }}
+{{- $tracingProvider := index . 3 }}
 {{- $gateway := dict }}
+
 {{- if hasKey $allGatewaySettings $gatewayType }}
   {{- $gatewaySettings := index $allGatewaySettings $gatewayType }}
   {{- $_ := set $gateway "httpGateway" $gatewaySettings }}
@@ -13,16 +14,16 @@
   {{- $_ := set $gateway "httpGateway" (dict) }}
 {{- end }}
 
-{{- if and ($context.global).nfType $context.global.nfInstanceId }}
-  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "serverName" (printf "%s-%s" $context.global.nfType $context.global.nfInstanceId)))) }}
+{{- if and ($contextValues.global).nfType $contextValues.global.nfInstanceId }}
+  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "serverName" (printf "%s-%s" $contextValues.global.nfType $contextValues.global.nfInstanceId)))) }}
 {{- end }}
 
-{{- if ($context.httpConnectionManager).idleTimeout }}
-  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "idleTimeout" $context.httpConnectionManager.idleTimeout))) }}
+{{- if ($contextValues.httpConnectionManager).idleTimeout }}
+  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "idleTimeout" $contextValues.httpConnectionManager.idleTimeout))) }}
 {{- end }}
 
-{{- if $context.gatewayProxyExtensions }}
-  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "extensions" (dict "configs" $context.gatewayProxyExtensions))) }}
+{{- if $contextValues.gatewayProxyExtensions }}
+  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "extensions" (dict "configs" $contextValues.gatewayProxyExtensions))) }}
 {{- end }}
 
 {{- toYaml $gateway | indent 2 }}
@@ -51,8 +52,8 @@ spec:
 {{- if $gatewaySettings.httpHybridGateway }}
 {{ toYaml $gatewaySettings.httpHybridGateway | indent 2}}
 {{- end }}
-# Call the gatewayTemplate for customHttpGateway
-{{- include "httpGatewayTemplate" (dict "gatewaySettings" $gatewaySettings "gatewayType" "customHttpGateway" "context" . "tracingProvider" ($spec.tracing).provider) }}
+{{- "\n" }}
+{{- template "httpGatewayTemplate" (list .Values "customHttpGateway" $gatewaySettings ($spec.tracing).provider) -}}
 {{- if or ($gatewaySettings.options) ($gatewaySettings.accessLoggingService) }}
   options:
 {{- end }}
@@ -95,8 +96,8 @@ spec:
 {{- if $gatewaySettings.httpsHybridGateway }}
 {{ toYaml $gatewaySettings.httpsHybridGateway | indent 2}}
 {{- end }}
-# Call the gatewayTemplate for customHttpsGateway
-{{- include "httpGatewayTemplate" (dict "gatewaySettings" $gatewaySettings "gatewayType" "customHttpsGateway"  "context" . "tracingProvider" ($spec.tracing).provider) }}
+{{- "\n" }}
+{{- template "httpGatewayTemplate" (list .Values "customHttpsGateway" $gatewaySettings ($spec.tracing).provider) -}}
 {{- if or ($gatewaySettings.options) ($gatewaySettings.accessLoggingService) }}
   options:
 {{- end }}
