@@ -1,3 +1,34 @@
+{{- define "httpGatewayTemplate" }}
+{{- $contextValues := index . 0 }}
+{{- $gatewayType := index . 1 }}
+{{- $allGatewaySettings := index . 2 }}
+{{- $tracingProvider := index . 3 }}
+{{- $gateway := dict }}
+
+{{- if hasKey $allGatewaySettings $gatewayType }}
+  {{- $gatewaySettings := index $allGatewaySettings $gatewayType }}
+  {{- $_ := set $gateway "httpGateway" $gatewaySettings }}
+{{- else if $tracingProvider }}
+  {{- $_ := set $gateway "httpGateway" (dict "options" (dict "httpConnectionManagerSettings" (dict "tracing" $tracingProvider))) }}
+{{- else }}
+  {{- $_ := set $gateway "httpGateway" (dict) }}
+{{- end }}
+
+{{- if and ($contextValues.global).nfType $contextValues.global.nfInstanceId }}
+  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "serverName" (printf "%s-%s" $contextValues.global.nfType $contextValues.global.nfInstanceId)))) }}
+{{- end }}
+
+{{- if ($contextValues.httpConnectionManager).idleTimeout }}
+  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "httpConnectionManagerSettings" (dict "idleTimeout" $contextValues.httpConnectionManager.idleTimeout))) }}
+{{- end }}
+
+{{- if $contextValues.gatewayProxyExtensions }}
+  {{- $_ := merge $gateway.httpGateway (dict "options" (dict "extensions" (dict "configs" $contextValues.gatewayProxyExtensions))) }}
+{{- end }}
+
+{{- toYaml $gateway | indent 2 }}
+{{- end }}
+
 {{- define "defaultGateway.gateway" -}}
 {{- $name := (index . 1) }}
 {{- $spec := (index . 2) }}
@@ -21,34 +52,8 @@ spec:
 {{- if $gatewaySettings.httpHybridGateway }}
 {{ toYaml $gatewaySettings.httpHybridGateway | indent 2}}
 {{- end }}
-{{- if $gatewaySettings.customHttpGateway}}
-  httpGateway:
-{{ toYaml $gatewaySettings.customHttpGateway | indent 4}}
-{{- else if and .Values.global.nfType .Values.global.nfInstanceId }}
-  httpGateway:
-    options:
-      httpConnectionManagerSettings:
-        serverName: {{ .Values.global.nfType }}-{{ .Values.global.nfInstanceId }}
-  {{- if ((.Values.httpConnectionManager).idleTimeout) }}
-        idleTimeout: {{ .Values.httpConnectionManager.idleTimeout }}
-  {{- end }}
-
-  {{- if .Values.gatewayProxyExtensions }}
-      extensions:
-        configs:
-{{ toYaml .Values.gatewayProxyExtensions | indent 10 }}
-  {{- end }}
-{{- else if $spec.tracing }}
-{{- if $spec.tracing.provider }}
-  httpGateway:
-    options:
-      httpConnectionManagerSettings:
-        tracing:
-{{ toYaml $spec.tracing.provider | indent 10 }}
-{{- end }}
-{{- else }}
-  httpGateway: {}
-{{- end }}
+{{- "\n" }}
+{{- template "httpGatewayTemplate" (list .Values "customHttpGateway" $gatewaySettings ($spec.tracing).provider) -}}
 {{- if or ($gatewaySettings.options) ($gatewaySettings.accessLoggingService) }}
   options:
 {{- end }}
@@ -91,34 +96,8 @@ spec:
 {{- if $gatewaySettings.httpsHybridGateway }}
 {{ toYaml $gatewaySettings.httpsHybridGateway | indent 2}}
 {{- end }}
-{{- if $gatewaySettings.customHttpsGateway }}
-  httpGateway:
-{{ toYaml $gatewaySettings.customHttpsGateway | indent 4}}
-{{- else if and .Values.global.nfType .Values.global.nfInstanceId }}
-  httpGateway:
-    options:
-      httpConnectionManagerSettings:
-        serverName: {{ .Values.global.nfType }}-{{ .Values.global.nfInstanceId }}
-  {{- if ((.Values.httpConnectionManager).idleTimeout) }}
-        idleTimeout: {{ .Values.httpConnectionManager.idleTimeout }}
-  {{- end }}
-
-  {{- if .Values.gatewayProxyExtensions }}
-      extensions:
-        configs:
-{{ toYaml .Values.gatewayProxyExtensions | indent 10 }}
-  {{- end }}
-{{- else if $spec.tracing }}
-{{- if $spec.tracing.provider }}
-  httpGateway:
-    options:
-      httpConnectionManagerSettings:
-        tracing:
-{{ toYaml $spec.tracing.provider | indent 10 }}
-{{- end }}{{/* if $spec.tracing.provider */}}
-{{- else }}
-  httpGateway: {}
-{{- end }}{{/* if $gatewaySettings.customHttpsGateway */}}
+{{- "\n" }}
+{{- template "httpGatewayTemplate" (list .Values "customHttpsGateway" $gatewaySettings ($spec.tracing).provider) -}}
 {{- if or ($gatewaySettings.options) ($gatewaySettings.accessLoggingService) }}
   options:
 {{- end }}
