@@ -6,6 +6,7 @@
 {{- $gatewaySpec := (index . 2) }}
 {{- with (first .) }}
 {{- $global := .Values.global }}
+{{- $nfServiceTypes := coalesce .Values.nfServiceTypes ($global.ingress).nfServiceTypes }}
 {{- $settings := .Values.settings }}
 {{- $isUpgrade := .Values.gateway.upgrade }}
 {{- $gatewayProxy := .Values.gatewayProxies.gatewayProxy -}}
@@ -55,6 +56,10 @@ spec:
       labels:
         gloo: gateway-proxy
         gateway-proxy-id: {{ $name | kebabcase }}
+        {{- if $global.nfType }}
+        nf-type: {{ $global.nfType }}
+        nf-instance-id: {{ required "\n\n\n\n##########################################\n.$global.nfInstanceId  is mandatory and should contain UUIDv4!!!\n##########################################\n\n" .Values.global.nfInstanceId }}
+        {{- end }}
         {{- if not $isUpgrade }}
         gateway-proxy: live
         {{- end }}
@@ -73,6 +78,10 @@ spec:
           {{- end }}
         {{- end }}
       annotations:
+      {{- if $nfServiceTypes }}
+        nf-service-types:
+{{ toYaml $nfServiceTypes | indent 10 }}
+      {{- end }}
         # This annotation was introduced to resolve https://github.com/solo-io/gloo/issues/8392
         # It triggers a new rollout of the gateway proxy if the values in this config map changes.
         checksum/{{ $name | kebabcase }}-envoy-config: {{ $gatewaySpec.checksum }}
@@ -332,7 +341,7 @@ spec:
 {{- if $statsConfig.enabled }}
           - name: START_STATS_SERVER
             value: "true"
-{{- end}}
+{{- end }}
         volumeMounts:
 {{- if $global.glooMtls.enabled }}
         - mountPath: /etc/envoy/ssl
