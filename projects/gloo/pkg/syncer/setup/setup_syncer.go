@@ -635,8 +635,6 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 	// Register grpc endpoints to the grpc server
 	xds.SetupEnvoyXds(opts.ControlPlane.GrpcServer, opts.ControlPlane.XDSServer, opts.ControlPlane.SnapshotCache)
 
-	logger := contextutils.LoggerFrom(watchOpts.Ctx)
-
 	pluginRegistryFactoryFromGlooWrapper := extensions.PluginRegistryFactory
 
 	pluginRegistryFactory := registry.GetPluginRegistryFactory(opts)
