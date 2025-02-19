@@ -97,20 +97,28 @@ spec:
           name: rest-xds
           protocol: TCP
         readinessProbe:
+{{- if .Values.gloo.deployment.customReadinessProbe }}
+{{ toYaml .Values.gloo.deployment.customReadinessProbe | indent 10 }}
+{{- else }}
           tcpSocket:
             port: {{ .Values.gloo.deployment.xdsPort }}
           initialDelaySeconds: 3
           periodSeconds: 10
           failureThreshold: 3
+{{- end }} {{/* if .Values.gloo.deployment.customReadinessProbe */}}
 {{- if .Values.gloo.deployment.livenessProbeEnabled }}
         livenessProbe:
+{{- if .Values.gloo.deployment.customLivenessProbe }}
+{{ toYaml .Values.gloo.deployment.customLivenessProbe | indent 10 }}
+{{- else }}
           httpGet:
             path: /healthz
             port: 8765
           initialDelaySeconds: 3
           periodSeconds: 10
           failureThreshold: 3
-{{- end}}
+{{- end }} {{/* if .Values.gloo.deployment.customLivenessProbe */}}
+{{- end }} {{/* if .Values.gloo.deployment.livenessProbeEnabled */}}
         volumeMounts:
         - mountPath: /etc/envoy
           name: envoy-sidecar-config
@@ -255,23 +263,29 @@ spec:
           - name: HEADER_SECRET_REF_NS_MATCHES_US
             value: "true"
         {{- end}}
-{{- if not .Values.global.glooMtls.enabled }}
         readinessProbe:
+{{- if .Values.gloo.deployment.customReadinessProbe }}
+{{ toYaml .Values.gloo.deployment.customReadinessProbe | indent 10 }}
+{{- else }}
           tcpSocket:
             port: {{ .Values.gloo.deployment.xdsPort }}
           initialDelaySeconds: 3
           periodSeconds: 10
           failureThreshold: 3
+{{- end }} {{/* if .Values.gloo.deployment.customReadinessProbe */}}
 {{- if .Values.gloo.deployment.livenessProbeEnabled }}
         livenessProbe:
+{{- if .Values.gloo.deployment.customLivenessProbe }}
+{{ toYaml .Values.gloo.deployment.customLivenessProbe | indent 10 }}
+{{- else }}
           httpGet:
             path: /healthz
             port: 8765
           initialDelaySeconds: 3
           periodSeconds: 10
           failureThreshold: 3
-{{- end }}
-{{- end }}{{/* if not .Values.global.glooMtls.enabled */}}
+{{- end }} {{/* if .Values.gloo.deployment.customLivenessProbe */}}
+{{- end }} {{/* if .Values.gloo.deployment.livenessProbeEnabled */}}
 {{- end }} {{/* define "gloo.deploymentSpec "*/}}
 
 {{/* Render template with yaml overrides */}}

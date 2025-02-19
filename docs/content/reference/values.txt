@@ -880,6 +880,8 @@
 |gatewayProxies.NAME.topologySpreadConstraints[]|interface||configure topologySpreadConstraints for gateway proxy pods|
 |gatewayProxies.NAME.tracing.provider.NAME|interface|||
 |gatewayProxies.NAME.tracing.cluster[].NAME|interface|||
+|gatewayProxies.gatewayProxy.xdsConfig.rateLimitSettings.max_tokens|int||Maximum number of tokens to be used for rate limiting discovery request calls. If not set, a default value of 100 will be used.|
+|gatewayProxies.gatewayProxy.xdsConfig.rateLimitSettings.fill_rate|double||Rate at which tokens will be filled per second. If not set, a default fill rate of 10 tokens per second will be used.|
 |gatewayProxies.NAME.gatewaySettings.enabled|bool||enable/disable default gateways|
 |gatewayProxies.NAME.gatewaySettings.disableGeneratedGateways|bool||set to true to disable the gateway generation for a gateway proxy|
 |gatewayProxies.NAME.gatewaySettings.disableHttpGateway|bool||Set to true to disable http gateway generation.|
@@ -1579,7 +1581,9 @@
 |global.glooMtls.sdsResources.limits.cpu|string||amount of CPUs|
 |global.glooMtls.sdsResources.requests.memory|string||amount of memory|
 |global.glooMtls.sdsResources.requests.cpu|string||amount of CPUs|
+|global.glooMtls.ipv4Only|bool|true|This field if set false will bind the IPv6 address '::' on envoy-sidecar-config.|
 |global.istioSDS.enabled|bool|false|Enables SDS cert-rotator sidecar for istio mTLS cert rotation. Warning: this value is deprecated and will be removed in a future release. Use global.istioIntegration.enabled instead.|
+|global.istioSDS.enabled|bool|false|Enables SDS cert-rotator sidecar for istio mTLS cert rotation|
 |global.istioSDS.customSidecars[]|interface||Override the default Istio sidecar in gateway-proxy with a custom container. Ignored if IstioSDS.enabled is false|
 |global.istioIntegration.enabled|bool|false|Enables Istio integration for Gloo Edge, adding the sds and istio-proxy containers to gateways for Istio mTLS cert rotation.|
 |global.istioIntegration.enableAutoMtls|bool|false|Enables Istio auto mtls configuration for Gloo Edge upstreams.|
