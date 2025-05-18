@@ -20,16 +20,19 @@ metadata:
   {{- end }}
 {{- end }}
 spec:
-{{- if $spec.service.externalIPs }}
-{{- with $spec.service.externalIPs }}
+{{ - if .Values.global.ingress.externalIPs }}
+{{ - with .Values.global.ingress.externalIPs }}
   externalIPs:
     {{- range . }}
     - {{ . }}
     {{- end }}
-{{- end }} {{- /* with spec.service.externalIPs */}}
-{{- end }} {{- /* $spec.service.externalIPs */}}
+{{- end }} {{- /* with .Values.global.ingress.externalIPs */}}
+{{- end }} {{- /* if .Values.global.ingress.externalIPs */}}
 {{- if $spec.service.externalTrafficPolicy }}
   externalTrafficPolicy: {{ $spec.service.externalTrafficPolicy }}
+{{- end }}
+{{- if $spec.service.ipFamilyPolicy }}
+  ipFamilyPolicy: {{ $spec.service.ipFamilyPolicy }}
 {{- end }}
   # port order matters due to this issue: https://github.com/solo-io/gloo/issues/2571
   ports:
