@@ -20,8 +20,8 @@ metadata:
   {{- end }}
 {{- end }}
 spec:
-{{ - if .Values.global.ingress.externalIPs }}
-{{ - with .Values.global.ingress.externalIPs }}
+{{- if .Values.global.ingress.externalIPs }}
+{{- with .Values.global.ingress.externalIPs }}
   externalIPs:
     {{- range . }}
     - {{ . }}
