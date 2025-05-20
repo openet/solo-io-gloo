@@ -25,80 +25,21 @@ ClusterRole
 {{- end -}}
 {{- end -}}
 
-{{- define "gloo.image.repository" -}}
-{{- /*
-for fips or fips-distroless variants: add -fips to the image repo (name)
-*/ -}}
-{{- if .repository -}}
-{{- $repository := .repository -}}
-{{- if or .fips (has .variant (list "fips" "fips-distroless")) -}}
-{{- $fipsSupportedImages := list "gloo-ee" "extauth-ee" "gloo-ee-envoy-wrapper" "rate-limit-ee" "discovery-ee" "sds-ee" -}}
-{{- if (has .repository $fipsSupportedImages) -}}
-{{- $repository = printf "%s-fips" $repository -}}
-{{- end -}}{{- /* if (has .repository $fipsSupportedImages) */ -}}
-{{- end -}}{{- /* if or .fips (has .variant (list "fips" "fips-distroless")) */ -}}
-{{ $repository }}
-{{- end -}}{{- /* if .repository */ -}}
-{{- end -}}{{- /* define "gloo.image.repository" */ -}}
-
-{{- define "gloo.image.tag" -}}
-{{- if .tag -}}
-{{- $tag := .tag -}}
-{{- /*
-for distroless or fips-distroless variants: add -distroless to the tag
-*/ -}}
-{{- if and .tag (has .variant (list "distroless" "fips-distroless")) -}}
-{{- $distrolessSupportedImages := list "gloo" "gloo-envoy-wrapper" "discovery" "sds" "certgen" "kubectl" "access-logger" "ingress" "gloo-ee" "extauth-ee" "gloo-ee-envoy-wrapper" "rate-limit-ee" "discovery-ee" "sds-ee" "observability-ee" "caching-ee" -}}
-{{- if (has .repository $distrolessSupportedImages) -}}
-{{- $tag = printf "%s-distroless" $tag -}} {{- /* Add distroless suffix to the tag since it contains the same binaries in a different container */ -}}
-{{- end -}}{{- /* if (has .repository $distrolessSupportedImages) */ -}}
-{{- end -}}{{- /* if and .tag (has .variant (list "distroless" "fips-distroless")) */ -}}
-{{ $tag }}
-{{- end -}}{{- /* if .tag */ -}}
-{{- end -}}{{- /* define "gloo.image.tag" */ -}}
-
-{{- define "gloo.image.digest" -}}
-{{- $digest := "" -}}
-{{- if not .disableDigest -}}
-  {{- if or .fips (eq .variant "fips") -}}
-    {{- if .fipsDigest -}}
-      {{- $digest = .fipsDigest -}}
-    {{- end -}}{{- /* if .fipsDigest */ -}}
-  {{- else if eq .variant "distroless" -}}
-    {{- if .distrolessDigest -}}
-      {{- $digest = .distrolessDigest -}}
-    {{- end -}}{{- /* if .distrolessDigest */ -}}
-  {{- else if eq .variant "fips-distroless" -}}
-    {{- if .fipsDistrolessDigest -}}
-      {{- $digest = .fipsDistrolessDigest -}}
-    {{- end -}}{{- /* if .fipsDistrolessDigest */ -}}
-  {{- else -}}
-    {{- if .digest -}}{{- /* standard image digest */ -}}
-      {{- $digest = .digest -}}
-    {{- end -}}{{- /* if .digest */ -}}
-  {{- end -}}
-{{- end -}}{{- /* if not .disableDigests" */ -}}
-{{ $digest }}
-{{- end -}}{{- /* define "gloo.image.digest" */ -}}
-
 
 {{/*
-Construct a container image name from a registry, repository, tag, and digest.
+Expand the name of a container image, adding -fips to the name of the repo if configured.
 */}}
 {{- define "gloo.image" -}}
-{{- $repository := include  "gloo.image.repository" . -}}
-{{- $image := printf "%s/%s" .registry $repository -}}
-{{- $tag := include  "gloo.image.tag" . -}}
-{{- if $tag -}}
-{{- $image = printf "%s:%s" $image $tag -}}
-{{- end -}}{{- /* if .tag */ -}}
-{{- $digest := include  "gloo.image.digest" . -}}
-{{- if $digest -}}
-{{- $image = printf "%s@%s" $image $digest -}}
-{{- end -}}{{- /* if .digest */ -}}
-{{ $image }}
-{{- end -}}{{- /* define "gloo.image" */ -}}
-
+{{- if and .fips .fipsDigest -}}
+{{- /*
+In consideration of https://github.com/solo-io/gloo/issues/7326, we want the ability for -fips images to use their own digests,
+rather than falling back (incorrectly) onto the digests of non-fips images
+*/ -}}
+{{ .registry }}/{{ .repository }}-fips:{{ .tag }}@{{ .fipsDigest }}
+{{- else -}}
+{{ .registry }}/{{ .repository }}{{ ternary "-fips" "" ( and (has .repository (list "gloo-ee" "extauth-ee" "gloo-ee-envoy-wrapper" "rate-limit-ee" "discovery-ee" "sds-ee" )) (default false .fips)) }}:{{ .tag }}{{ ternary "-extended" "" (default false .extended) }}{{- if .digest -}}@{{ .digest }}{{- end -}}
+{{- end -}}
+{{- end -}}
 
 {{- define "gloo.pullSecret" -}}
 {{- if .pullSecret -}}
