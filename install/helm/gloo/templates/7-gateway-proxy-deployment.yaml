@@ -56,10 +56,10 @@ spec:
       labels:
         gloo: gateway-proxy
         gateway-proxy-id: {{ $name | kebabcase }}
-        {{ - if $global.nfType }}
+        {{- if $global.nfType }}
         nf-type: {{ $global.nfType }}
         nf-instance-id: {{ required "\n\n\n\n##########################################\n.$global.nfInstanceId  is mandatory and should contain UUIDv4!!!\n##########################################\n\n" .Values.global.nfInstanceId }}
-        {{ - end }}
+        {{- end }}
         {{- if not $isUpgrade }}
         gateway-proxy: live
         {{- end }}
