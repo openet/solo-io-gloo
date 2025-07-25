@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       dispatch_lts: ${{ steps.dispatch-receiver.outputs.dispatch_lts }}
+      dispatch_tag: ${{ steps.dispatch-receiver.outputs.dispatch_tag }}
     steps:
       - name: The glooe-release-created event is received when a relase is cut in solo-projects repo
         id: dispatch-receiver
@@ -57,19 +58,19 @@ jobs:
         if [[ "${{ steps.lts-version.outputs.lts }}" == "main" ]]; then
           minor="1.20"
           directory="main"
-        elif [[ "${{ steps.lts-version.outputs.lts }}" == "${{ vars.LATEST_STABLE_BRANCH }}" ]]; then
-          minor="1.19"
-          directory="latest"
-        elif [[ "${{ steps.lts-version.outputs.lts }}" == "${{ vars.LATEST_STABLE_MINUS_ONE_BRANCH }}" ]]; then
-          minor="1.18"
-          directory="${{ vars.LATEST_STABLE_MINUS_ONE_BRANCH }}"
-        elif [[ "${{ steps.lts-version.outputs.lts }}" == "${{ vars.LATEST_STABLE_MINUS_TWO_BRANCH }}" ]]; then
-          minor="1.17"
-          directory="${{ vars.LATEST_STABLE_MINUS_TWO_BRANCH }}"
-        else
+        elif [[ "${{ steps.lts-version.outputs.lts }}" == "v1.20.x" ]]; then
           minor="1.20"
           directory="main"
-        fi        
+        elif [[ "${{ steps.lts-version.outputs.lts }}" == "v1.19.x" ]]; then
+          minor="1.19"
+          directory="latest"
+        elif [[ "${{ steps.lts-version.outputs.lts }}" == "v1.18.x" ]]; then
+          minor="1.18"
+          directory="1.18.x"
+        else
+          minor="1.17"
+          directory="1.17.x"
+        fi
         echo "minor=${minor}" >> $GITHUB_OUTPUT
         echo "directory=${directory}" >> $GITHUB_OUTPUT
     - name: Checkout docs repo
@@ -112,9 +113,9 @@ jobs:
 
         # Determine file pattern based on NEW_VERSION
         if [[ "$NEW_VERSION" == "${{ needs.receiver.outputs.dispatch_tag }}" ]]; then
-          FILE_PATTERN="gloo_oss_*.md"
+          FILE_PATTERN="gloo_patch*.md"
         else
-          FILE_PATTERN="gloo_patch_*.md"
+          FILE_PATTERN="gloo_oss*.md"
         fi
 
         # Run sed replacement on matching files
