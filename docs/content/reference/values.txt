@@ -1044,6 +1044,8 @@
 |gatewayProxies.NAME.topologySpreadConstraints[]|interface||configure topologySpreadConstraints for gateway proxy pods|
 |gatewayProxies.NAME.tracing.provider.NAME|interface|||
 |gatewayProxies.NAME.tracing.cluster[].NAME|interface|||
+|gatewayProxies.gatewayProxy.xdsConfig.rateLimitSettings.max_tokens|int||Maximum number of tokens to be used for rate limiting discovery request calls. If not set, a default value of 100 will be used.|
+|gatewayProxies.gatewayProxy.xdsConfig.rateLimitSettings.fill_rate|double||Rate at which tokens will be filled per second. If not set, a default fill rate of 10 tokens per second will be used.|
 |gatewayProxies.NAME.gatewaySettings.enabled|bool||enable/disable default gateways|
 |gatewayProxies.NAME.gatewaySettings.disableGeneratedGateways|bool||set to true to disable the gateway generation for a gateway proxy|
 |gatewayProxies.NAME.gatewaySettings.disableHttpGateway|bool||Set to true to disable http gateway generation.|
@@ -1689,6 +1691,7 @@
 |global.glooMtls.sds.sdsResources.limits.cpu|string||amount of CPUs|
 |global.glooMtls.sds.sdsResources.requests.memory|string||amount of memory|
 |global.glooMtls.sds.sdsResources.requests.cpu|string||amount of CPUs|
+|global.glooMtls.ipv4Only|bool|true|This field if set false will bind the IPv6 address '::' on envoy-sidecar-config.|
 |global.glooMtls.envoy.image.tag|string|<release_version, ex: 1.2.3>|The image tag for the container.|
 |global.glooMtls.envoy.image.repository|string|gloo-envoy-wrapper|The image repository (name) for the container.|
 |global.glooMtls.envoy.image.digest|string||The container image's hash digest (e.g. 'sha256:12345...'), consumed when variant=standard.|
