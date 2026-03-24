@@ -54,7 +54,7 @@ SOURCES := $(shell find . -name "*.go" | grep -v test.go)
 # for more information, see https://github.com/solo-io/gloo/pull/9633
 # and
 # https://soloio.slab.com/posts/extended-http-methods-design-doc-40j7pjeu
-ENVOY_GLOO_IMAGE ?= quay.io/solo-io/envoy-gloo:1.35.8-patch1
+ENVOY_GLOO_IMAGE ?= quay.io/solo-io/envoy-gloo:1.35.9-patch1
 LDFLAGS := "-X github.com/solo-io/gloo/pkg/version.Version=$(VERSION)"
 GCFLAGS ?=
 
@@ -186,7 +186,7 @@ install-go-tools: mod-download ## Download and install Go dependencies
 	go install github.com/saiskee/gettercheck
 	go install github.com/onsi/ginkgo/v2/ginkgo@$(GINKGO_VERSION)
 	# This version must stay in sync with the version used in CI: .github/workflows/static-analysis.yaml
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(LINTER_VERSION)
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(LINTER_VERSION)
 	go install github.com/quasilyte/go-ruleguard/cmd/ruleguard@v0.3.16
 	# Kubebuilder docs generation
 	go install fybrik.io/crdoc@v0.6.3

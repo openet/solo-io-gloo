@@ -135,6 +135,7 @@ options:
   machineType: 'N1_HIGHCPU_32'
   env:
   - 'TAGGED_VERSION=$TAG_NAME'
+  - 'GOTOOLCHAIN=auto'
   - 'TEST_ASSET_ID=$_PR_NUM'
   - 'ENVOY_BINARY=/workspace/envoy'
   - 'AWS_SHARED_CREDENTIALS_FILE=/workspace/aws_credentials'
@@ -146,6 +147,7 @@ options:
   # Gloo supports running tests in parallel (https://github.com/solo-io/gloo/pull/8423) but occasionally
   # Ginkgo reports a failure, even when all test suites pass. As a result, we do not run tests in parallel in CI.
   - 'GINKGO_USER_FLAGS=-procs=1'
+  - 'DOCKER_API_VERSION=1.41'
   volumes:
   - name: 'gopath'
     path: '/go'
