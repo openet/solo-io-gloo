@@ -22,7 +22,6 @@ import (
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/deprecated_cipher_passthrough"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/dynamic_forward_proxy"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/edsupstream"
-	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/enterprise_warning"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/extauth"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/faultinjection"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/grpc"
@@ -171,8 +170,6 @@ func GetPluginRegistryFactory(opts PluginOpts) plugins.PluginRegistryFactory {
 	return func(ctx context.Context) plugins.PluginRegistry {
 		availablePlugins := Plugins(opts)
 
-		// To improve the UX, load a plugin that warns users if they are attempting to use enterprise configuration
-		availablePlugins = append(availablePlugins, enterprise_warning.NewPlugin())
 		return NewPluginRegistry(availablePlugins)
 	}
 }
