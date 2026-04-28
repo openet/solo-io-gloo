@@ -1,5 +1,6 @@
 {{- if .Values.gateway.rolloutJob.enabled }}
 {{- if .Values.global.glooRbac.create }}
+{{- if not .Values.global.glooRbac.namespaced -}}
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -12,5 +13,6 @@ rules:
 - apiGroups: ["gateway.solo.io"]
   resources: ["*"]
   verbs: ["get", "list", "create", "update", "patch"]
+{{- end }}{{/* if not .Values.global.glooRbac.namespaced */}}
 {{- end -}}{{/* if .Values.global.glooRbac.create */}}
 {{- end }}{{/* if .Values.gateway.rolloutJob.enabled  */}}
