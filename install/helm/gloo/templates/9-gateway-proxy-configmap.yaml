@@ -30,8 +30,6 @@ data:
 {{- if $spec.customStaticLayer }}
 {{ toYaml $spec.customStaticLayer | indent 10 }}
 {{- end}}
-          overload:
-            global_downstream_max_connections: {{ $spec.globalDownstreamMaxConnections }}
           upstream:
             healthy_panic_threshold:
               value: {{ $spec.healthyPanicThreshold }}
@@ -78,14 +76,16 @@ data:
                                 path: "/ready"
                                 headers:
                                 - name: ":method"
-                                  exact_match: GET
+                                  string_match:
+                                    exact: GET
                               route:
                                 cluster: admin_port_cluster
                             - match:
                                 prefix: "/metrics"
                                 headers:
                                 - name: ":method"
-                                  exact_match: GET
+                                  string_match:
+                                    exact: GET
                               route:
                                 prefix_rewrite: {{ $statsConfig.routePrefixRewrite }}
                                 cluster: admin_port_cluster
@@ -94,7 +94,8 @@ data:
                                 prefix: "/stats"
                                 headers:
                                 - name: ":method"
-                                  exact_match: GET
+                                  string_match:
+                                    exact: GET
                               route:
                                 prefix_rewrite: {{ .Values.global.glooStats.statsPrefixRewrite }}
                                 cluster: admin_port_cluster
@@ -128,28 +129,32 @@ data:
                                 path: "/ready"
                                 headers:
                                   - name: ":method"
-                                    exact_match: GET
+                                    string_match:
+                                      exact: GET
                               route:
                                 cluster: admin_port_cluster
                             - match:
                                 prefix: "/stats"
                                 headers:
                                   - name: ":method"
-                                    exact_match: GET
+                                    string_match:
+                                      exact: GET
                               route:
                                 cluster: admin_port_cluster
                             - match:
                                  prefix: "/config_dump"
                                  headers:
                                    - name: ":method"
-                                     exact_match: GET
+                                     string_match:
+                                       exact: GET
                               route:
                                 cluster: admin_port_cluster
                             - match:
                                 prefix: "/clusters"
                                 headers:
                                   - name: ":method"
-                                    exact_match: GET
+                                    string_match:
+                                      exact: GET
                               route:
                                 cluster: admin_port_cluster
                     http_filters:
@@ -171,12 +176,15 @@ data:
                     {{- $glooAddress := printf "gloo.%s.svc.%s" .Release.Namespace .Values.k8s.clusterName }}
                     address: {{ empty $spec.xdsServiceAddress | ternary $glooAddress $spec.xdsServiceAddress }}
                     port_value: {{ empty $spec.xdsServicePort | ternary .Values.gloo.deployment.xdsPort $spec.xdsServicePort }}
-        http2_protocol_options: {}
+        typed_extension_protocol_options:
+          envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+            "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+            explicit_http_config:
+              http2_protocol_options: {}
         upstream_connection_options:
           tcp_keepalive:
             keepalive_time: {{ $spec.tcpKeepaliveTimeSeconds }}
         type: STRICT_DNS
-        respect_dns_ttl: true
 {{- if $global.glooMtls.enabled }}
         transport_socket:
           name: envoy.transport_sockets.tls
@@ -207,7 +215,11 @@ data:
 {{- if or (or $global.istioSDS.enabled $global.istioIntegration.enabled) $global.glooMtls.enabled }}
       - name: gateway_proxy_sds
         connect_timeout: 0.25s
-        http2_protocol_options: {}
+        typed_extension_protocol_options:
+          envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+            "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+            explicit_http_config:
+              http2_protocol_options: {}
         load_assignment:
           cluster_name: gateway_proxy_sds
           endpoints:
@@ -235,7 +247,6 @@ data:
           tcp_keepalive:
             keepalive_time: {{ $spec.tcpKeepaliveTimeSeconds }}
         type: STRICT_DNS
-        respect_dns_ttl: true
 {{- if $global.glooMtls.enabled }}
         transport_socket:
           name: envoy.transport_sockets.tls
@@ -278,7 +289,6 @@ data:
           tcp_keepalive:
             keepalive_time: {{ $spec.tcpKeepaliveTimeSeconds }}
         type: STRICT_DNS
-        respect_dns_ttl: true
 {{- if .Values.accessLogger.enabled }}
       - name: access_log_cluster
         connect_timeout: 5.000s
@@ -291,7 +301,11 @@ data:
                         socket_address:
                             address: gateway-proxy-access-logger.{{ .Release.Namespace }}.svc.{{ .Values.k8s.clusterName}}
                             port_value: {{.Values.accessLogger.port}}
-        http2_protocol_options: {}
+        typed_extension_protocol_options:
+          envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+            "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+            explicit_http_config:
+              http2_protocol_options: {}
         type: STRICT_DNS
 {{- end}} {{- /* if .Values.accessLogger.enabled */}}
 {{- if $spec.tracing -}}
@@ -378,7 +392,11 @@ data:
       resource_monitors: {{- toYaml $spec.envoyOverloadManager.resourceMonitors | nindent 8 }}
 {{- end }}
     admin:
-      access_log_path: /dev/null
+      access_log:
+      - name: envoy.access_loggers.file
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
+          path: /dev/null
       address:
         socket_address:
           address: {{ $spec.loopBackAddress }}

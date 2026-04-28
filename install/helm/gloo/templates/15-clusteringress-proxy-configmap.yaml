@@ -17,8 +17,6 @@ data:
       layers:
       - name: static_layer
         static_layer:
-          overload:
-            global_downstream_max_connections: 250000
       - name: admin_layer
         admin_layer: {}
     node:
@@ -40,7 +38,11 @@ data:
                   socket_address:
                     address: gloo
                     port_value: {{ .Values.gloo.deployment.xdsPort }}
-        http2_protocol_options: {}
+        typed_extension_protocol_options:
+          envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+            "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+            explicit_http_config:
+              http2_protocol_options: {}
         upstream_connection_options:
           tcp_keepalive: {}
         type: STRICT_DNS
@@ -59,7 +61,6 @@ data:
         upstream_connection_options:
           tcp_keepalive: {}
         type: STRICT_DNS
-        respect_dns_ttl: true
 {{- if .Values.settings.integrations.knative.proxy.stats }}
       - name: admin_port_cluster
         connect_timeout: 5.000s
@@ -99,7 +100,8 @@ data:
                                 prefix: "/metrics"
                                 headers:
                                 - name: ":method"
-                                  exact_match: GET
+                                  string_match:
+                                    exact: GET
                               route:
                                 prefix_rewrite: {{ .Values.global.glooStats.routePrefixRewrite }}
                                 cluster: admin_port_cluster
@@ -108,7 +110,8 @@ data:
                                 prefix: "/stats"
                                 headers:
                                 - name: ":method"
-                                  exact_match: GET
+                                  string_match:
+                                    exact: GET
                               route:
                                 prefix_rewrite: {{ .Values.global.glooStats.statsPrefixRewrite }}
                                 cluster: admin_port_cluster
@@ -138,7 +141,11 @@ data:
         resource_api_version: V3
         ads: {}
     admin:
-      access_log_path: /dev/null
+      access_log:
+      - name: envoy.access_loggers.file
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
+          path: /dev/null
       address:
         socket_address:
           address: {{ .Values.settings.integrations.knative.proxy.loopBackAddress }}
