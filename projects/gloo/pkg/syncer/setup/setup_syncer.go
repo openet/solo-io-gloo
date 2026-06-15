@@ -654,7 +654,7 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 	statusClient := gloostatusutils.GetStatusClientForNamespace(opts.StatusReporterNamespace)
 
 	// Register grpc endpoints to the grpc server
-	xds.SetupEnvoyXds(opts.ControlPlane.GrpcServer, opts.ControlPlane.XDSServer, opts.ControlPlane.SnapshotCache)
+	xds.SetupEnvoyXds(opts.ControlPlane.GrpcServer, opts.ControlPlane.XDSServer, opts.ControlPlane.SnapshotCache, opts.Settings.GetIpV4Only())
 
 	pluginRegistryFactoryFromGlooWrapper := extensions.PluginRegistryFactory
 
