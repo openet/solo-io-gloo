@@ -514,8 +514,12 @@ $(DISTROLESS_OUTPUT_DIR)/Dockerfile: $(DISTROLESS_DIR)/Dockerfile
 	mkdir -p $(DISTROLESS_OUTPUT_DIR)
 	cp $< $@
 
+$(DISTROLESS_OUTPUT_DIR)/sync-packages.sh: $(DISTROLESS_DIR)/sync-packages.sh
+	mkdir -p $(DISTROLESS_OUTPUT_DIR)
+	cp $< $@
+
 .PHONY: distroless-docker
-distroless-docker: $(DISTROLESS_OUTPUT_DIR)/Dockerfile
+distroless-docker: $(DISTROLESS_OUTPUT_DIR)/Dockerfile $(DISTROLESS_OUTPUT_DIR)/sync-packages.sh
 	docker buildx build $(LOAD_OR_PUSH) $(PLATFORM_MULTIARCH) $(DISTROLESS_OUTPUT_DIR) -f $(DISTROLESS_OUTPUT_DIR)/Dockerfile \
 		--build-arg PACKAGE_DONOR_IMAGE=$(PACKAGE_DONOR_IMAGE) \
 		--build-arg BASE_IMAGE=$(DISTROLESS_BASE_IMAGE) \
@@ -839,6 +843,13 @@ certgen-distroless-docker: $(CERTGEN_OUTPUT_DIR)/certgen-linux-$(GOARCH) $(CERTG
 KUBECTL_DIR=jobs/kubectl
 KUBECTL_OUTPUT_DIR=$(OUTPUT_DIR)/$(KUBECTL_DIR)
 
+# Derive the kubectl minor version from the k8s.io/kubectl version in go.mod
+# (k8s.io/kubectl v0.X.Y tracks kubernetes v1.X.Y), then resolve it to the
+# latest patch release published for that minor. A replace directive takes
+# precedence over the require entry, since that is the version actually built.
+KUBECTL_MINOR = $(shell { grep -E '^\s*k8s\.io/kubectl => k8s\.io/kubectl v0\.' go.mod || grep -E '^\s*k8s\.io/kubectl v0\.' go.mod; } | head -1 | awk '{print $$NF}' | sed -E 's/^v0\.([0-9]+)\..*/1.\1/')
+KUBECTL_VERSION = $(shell [ -n "$(KUBECTL_MINOR)" ] || { echo "ERROR: could not determine kubectl minor version from go.mod" >&2; exit 1; }; curl -fsSL https://dl.k8s.io/release/stable-$(KUBECTL_MINOR).txt)
+
 $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl: $(KUBECTL_DIR)/Dockerfile
 	mkdir -p $(KUBECTL_OUTPUT_DIR)
 	cp $< $@
@@ -847,6 +858,7 @@ $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl: $(KUBECTL_DIR)/Dockerfile
 kubectl-docker: $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl
 	docker buildx build $(LOAD_OR_PUSH) $(PLATFORM_MULTIARCH) $(KUBECTL_OUTPUT_DIR) -f $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl \
 		--build-arg BASE_IMAGE=$(ALPINE_BASE_IMAGE) \
+		--build-arg KUBECTL_VERSION=$(KUBECTL_VERSION) \
 		-t $(IMAGE_REGISTRY)/kubectl:$(VERSION) $(QUAY_EXPIRATION_LABEL)
 
 $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl.distroless: $(KUBECTL_DIR)/Dockerfile.distroless
@@ -857,6 +869,7 @@ $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl.distroless: $(KUBECTL_DIR)/Dockerfile.d
 kubectl-distroless-docker: $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl.distroless distroless-with-utils-docker
 	docker buildx build $(LOAD_OR_PUSH) $(PLATFORM_MULTIARCH) $(KUBECTL_OUTPUT_DIR) -f $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl.distroless \
 		--build-arg BASE_IMAGE=$(GLOO_DISTROLESS_BASE_WITH_UTILS_IMAGE) \
+		--build-arg KUBECTL_VERSION=$(KUBECTL_VERSION) \
 		-t $(IMAGE_REGISTRY)/kubectl:$(VERSION)-distroless $(QUAY_EXPIRATION_LABEL)
 
 #----------------------------------------------------------------------------------
