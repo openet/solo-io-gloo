@@ -8,6 +8,7 @@
 {{- if not $spec.disabled }}
 {{- if (kindIs "map" $spec.kind.deployment) }}
 {{- if $spec.horizontalPodAutoscaler }}
+{{- if $spec.horizontalPodAutoscaler.enabled }}
 apiVersion: {{ $spec.horizontalPodAutoscaler.apiVersion }}
 kind: HorizontalPodAutoscaler
 metadata:
@@ -36,8 +37,9 @@ spec:
   {{ toYaml $spec.horizontalPodAutoscaler.behavior | nindent 4 }}
   {{- end }}
 {{- end }} {{/* if $spec.horizontalPodAutoscaler */}}
-{{- end }} {{/* if (kindIs "map" $spec.kind.deployment) */}}
+{{- end }} {{/* if $spec.horizontalPodAutoscaler.enabled */}}
 {{- end }} {{/* if not $spec.disabled */}}
+{{- end }} {{/* if $spec.kind.deployment */}}
 {{- end }} {{/* with */}}
 {{- end }} {{/* define gatewayProxy.autoscalerSpec*/}}
 {{- if .Values.gateway.enabled }}
@@ -46,7 +48,9 @@ spec:
 ---
 {{- $kubeResourceOverride := dict }}
 {{- if $gatewaySpec.horizontalPodAutoscaler -}}
+{{- if $gatewaySpec.horizontalPodAutoscaler.enabled }}
 {{- $kubeResourceOverride = $gatewaySpec.horizontalPodAutoscaler.kubeResourceOverride }}
+{{- end }} {{/* if $spec.horizontalPodAutoscaler.enabled */}}
 {{- end -}} {{/*if $gatewaySpec.horizontalPodAutoscaler*/}}
 {{- $ctx := (list $ $name $gatewaySpec)}}
 {{ include "gloo.util.merge" (list $ctx $kubeResourceOverride "gatewayProxy.autoscalerSpec") -}}

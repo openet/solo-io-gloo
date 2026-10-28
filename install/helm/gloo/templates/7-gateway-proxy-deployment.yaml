@@ -6,6 +6,7 @@
 {{- $gatewaySpec := (index . 2) }}
 {{- with (first .) }}
 {{- $global := .Values.global }}
+{{- $nfServiceTypes := ($global.ingress).nfServiceTypes }}
 {{- $settings := .Values.settings }}
 {{- $isUpgrade := .Values.gateway.upgrade }}
 {{- $gatewayProxy := .Values.gatewayProxies.gatewayProxy -}}
@@ -40,9 +41,11 @@ metadata:
   name: {{ $name | kebabcase }}
   namespace: {{ $spec.namespace | default .Release.Namespace }}
 spec:
+  {{- if not $spec.horizontalPodAutoscaler.enabled }}
   {{- if (kindIs "map" $spec.kind.deployment)}}
   {{- if $spec.kind.deployment.replicas}}
   replicas: {{ $spec.kind.deployment.replicas }}
+  {{- end}}  
   {{- end}}
   {{- end}}
   selector:
@@ -54,6 +57,10 @@ spec:
       labels:
         gloo: gateway-proxy
         gateway-proxy-id: {{ $name | kebabcase }}
+        {{- if $global.nfType }}
+        nf-type: {{ $global.nfType }}
+        nf-instance-id: {{ required "\n\n\n\n##########################################\n.$global.nfInstanceId  is mandatory and should contain UUIDv4!!!\n##########################################\n\n" .Values.global.nfInstanceId }}
+        {{- end }}        
         {{- if not $isUpgrade }}
         gateway-proxy: live
         {{- end }}
@@ -72,6 +79,10 @@ spec:
           {{- end }}
         {{- end }}
       annotations:
+      {{- if $nfServiceTypes }}
+        nf-service-types:
+{{ toYaml $nfServiceTypes | indent 10 }}
+      {{- end }}      
         # This annotation was introduced to resolve https://github.com/solo-io/gloo/issues/8392
         # It triggers a new rollout of the gateway proxy if the values in this config map changes.
         checksum/{{ $name | kebabcase }}-envoy-config: {{ $gatewaySpec.checksum }}
@@ -529,6 +540,6 @@ spec:
 ---
 {{- $kubeResourceOverride := $gatewaySpec.kubeResourceOverride  }}
 {{- $ctx := (list $ $name $gatewaySpec)}}
-{{ include "gloo.util.merge" (list $ctx $kubeResourceOverride "gatewayProxy.deploymentSpec") -}}
+{{- include "gloo.util.merge" (list $ctx $kubeResourceOverride "gatewayProxy.deploymentSpec") -}}
 {{- end }} {{/* range $name, $gatewaySpec := .Values.gatewayProxies */}}
 {{- end }} {{/* if .Values.gateway.enabled */}}
