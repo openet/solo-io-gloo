@@ -54,7 +54,7 @@ SOURCES := $(shell find . -name "*.go" | grep -v test.go)
 # for more information, see https://github.com/solo-io/gloo/pull/9633
 # and
 # https://soloio.slab.com/posts/extended-http-methods-design-doc-40j7pjeu
-ENVOY_GLOO_IMAGE ?= quay.io/solo-io/envoy-gloo:1.36.10-patch1
+ENVOY_GLOO_IMAGE ?= quay.io/solo-io/envoy-gloo:1.36.13-patch1
 LDFLAGS := "-X github.com/solo-io/gloo/pkg/version.Version=$(VERSION)"
 GCFLAGS ?=
 
@@ -121,7 +121,7 @@ GLOO_DISTROLESS_BASE_IMAGE ?= $(IMAGE_REGISTRY)/distroless-base:$(VERSION)
 # GLOO_DISTROLESS_BASE_IMAGE + utility binaries (sh, wget, sleep, nc, echo, ls, cat, vi)
 GLOO_DISTROLESS_BASE_WITH_UTILS_IMAGE ?= $(IMAGE_REGISTRY)/distroless-base-with-utils:$(VERSION)
 # BASE_IMAGE used in non distroless variants
-ALPINE_BASE_IMAGE ?= alpine:3.24.1
+ALPINE_BASE_IMAGE ?= alpine:3.24.4
 
 #----------------------------------------------------------------------------------
 # Macros
@@ -843,13 +843,6 @@ certgen-distroless-docker: $(CERTGEN_OUTPUT_DIR)/certgen-linux-$(GOARCH) $(CERTG
 KUBECTL_DIR=jobs/kubectl
 KUBECTL_OUTPUT_DIR=$(OUTPUT_DIR)/$(KUBECTL_DIR)
 
-# Derive the kubectl minor version from the k8s.io/kubectl version in go.mod
-# (k8s.io/kubectl v0.X.Y tracks kubernetes v1.X.Y), then resolve it to the
-# latest patch release published for that minor. A replace directive takes
-# precedence over the require entry, since that is the version actually built.
-KUBECTL_MINOR = $(shell { grep -E '^\s*k8s\.io/kubectl => k8s\.io/kubectl v0\.' go.mod || grep -E '^\s*k8s\.io/kubectl v0\.' go.mod; } | head -1 | awk '{print $$NF}' | sed -E 's/^v0\.([0-9]+)\..*/1.\1/')
-KUBECTL_VERSION = $(shell [ -n "$(KUBECTL_MINOR)" ] || { echo "ERROR: could not determine kubectl minor version from go.mod" >&2; exit 1; }; curl -fsSL https://dl.k8s.io/release/stable-$(KUBECTL_MINOR).txt)
-
 $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl: $(KUBECTL_DIR)/Dockerfile
 	mkdir -p $(KUBECTL_OUTPUT_DIR)
 	cp $< $@
@@ -858,7 +851,6 @@ $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl: $(KUBECTL_DIR)/Dockerfile
 kubectl-docker: $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl
 	docker buildx build $(LOAD_OR_PUSH) $(PLATFORM_MULTIARCH) $(KUBECTL_OUTPUT_DIR) -f $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl \
 		--build-arg BASE_IMAGE=$(ALPINE_BASE_IMAGE) \
-		--build-arg KUBECTL_VERSION=$(KUBECTL_VERSION) \
 		-t $(IMAGE_REGISTRY)/kubectl:$(VERSION) $(QUAY_EXPIRATION_LABEL)
 
 $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl.distroless: $(KUBECTL_DIR)/Dockerfile.distroless
@@ -866,10 +858,9 @@ $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl.distroless: $(KUBECTL_DIR)/Dockerfile.d
 	cp $< $@
 
 .PHONY: kubectl-distroless-docker
-kubectl-distroless-docker: $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl.distroless distroless-with-utils-docker
+kubectl-distroless-docker: $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl.distroless
 	docker buildx build $(LOAD_OR_PUSH) $(PLATFORM_MULTIARCH) $(KUBECTL_OUTPUT_DIR) -f $(KUBECTL_OUTPUT_DIR)/Dockerfile.kubectl.distroless \
-		--build-arg BASE_IMAGE=$(GLOO_DISTROLESS_BASE_WITH_UTILS_IMAGE) \
-		--build-arg KUBECTL_VERSION=$(KUBECTL_VERSION) \
+		--build-arg UTILS_DONOR_IMAGE=$(UTILS_DONOR_IMAGE) \
 		-t $(IMAGE_REGISTRY)/kubectl:$(VERSION)-distroless $(QUAY_EXPIRATION_LABEL)
 
 #----------------------------------------------------------------------------------
@@ -972,13 +963,19 @@ endif # RELEASE exclusive make targets
 publish-docker: docker docker-push
 
 # create a new helm chart and publish it to $(HELM_BUCKET)
+# Charts are write-once: a re-run indexes the published chart.
 publish-helm-chart: generate-helm-files
 	@echo "Uploading helm chart to $(HELM_BUCKET) with name gloo-$(VERSION).tgz"
+	helm package --destination $(HELM_SYNC_DIR)/charts $(HELM_DIR) >> /dev/null
+	if gsutil -q stat $(HELM_BUCKET)/charts/gloo-$(VERSION).tgz; then \
+		echo "$(HELM_BUCKET)/charts/gloo-$(VERSION).tgz already exists; indexing it"; \
+		gsutil cp $(HELM_BUCKET)/charts/gloo-$(VERSION).tgz $(HELM_SYNC_DIR)/charts/gloo-$(VERSION).tgz; \
+	else \
+		gsutil -h x-goog-if-generation-match:0 cp $(HELM_SYNC_DIR)/charts/gloo-$(VERSION).tgz $(HELM_BUCKET)/charts/gloo-$(VERSION).tgz; \
+	fi
 	until $$(GENERATION=$$(gsutil ls -a $(HELM_BUCKET)/index.yaml | tail -1 | cut -f2 -d '#') && \
 					gsutil -h "Cache-Control:no-store,no-cache" cp -v $(HELM_BUCKET)/index.yaml $(HELM_SYNC_DIR)/index.yaml && \
-					helm package --destination $(HELM_SYNC_DIR)/charts $(HELM_DIR) >> /dev/null && \
 					helm repo index $(HELM_SYNC_DIR) --merge $(HELM_SYNC_DIR)/index.yaml && \
-					gsutil -m rsync $(HELM_SYNC_DIR)/charts $(HELM_BUCKET)/charts && \
 					gsutil -h "Cache-Control:no-store,no-cache" -h x-goog-if-generation-match:"$$GENERATION" cp $(HELM_SYNC_DIR)/index.yaml $(HELM_BUCKET)/index.yaml); do \
 		echo "Failed to upload new helm index (updated helm index since last download?). Trying again"; \
 		sleep 2; \
